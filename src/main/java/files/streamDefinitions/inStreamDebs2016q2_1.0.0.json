@@ -1,0 +1,44 @@
+{
+  "name": "inStreamDebs2016q2",
+  "version": "1.0.0",
+  "nickName": "",
+  "description": "",
+  "payloadData": [
+    {
+      "name": "iij_timestamp",
+      "type": "LONG"
+    },
+    {
+      "name": "ts",
+      "type": "LONG"
+    },
+    {
+      "name": "attribute_1",
+      "type": "LONG"
+    },
+    {
+      "name": "attribute_2",
+      "type": "LONG"
+    },
+    {
+      "name": "attribute_3",
+      "type": "STRING"
+    },
+    {
+      "name": "attribute_4",
+      "type": "STRING"
+    },
+    {
+      "name": "attribute_5",
+      "type": "LONG"
+    },
+    {
+      "name": "attribute_6",
+      "type": "LONG"
+    },
+    {
+      "name": "eventType",
+      "type": "INT"
+    }
+  ]
+}

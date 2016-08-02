@@ -1,0 +1,44 @@
+{
+  "name": "inStreamDebs2016q1",
+  "version": "1.0.0",
+  "nickName": "",
+  "description": "",
+  "payloadData": [
+    {
+      "name": "iij_timestamp",
+      "type": "LONG"
+    },
+    {
+      "name": "ts",
+      "type": "LONG"
+    },
+    {
+      "name": "user_id",
+      "type": "LONG"
+    },
+    {
+      "name": "comment_id",
+      "type": "LONG"
+    },
+    {
+      "name": "comment",
+      "type": "STRING"
+    },
+    {
+      "name": "user_name",
+      "type": "STRING"
+    },
+    {
+      "name": "comment_replied_id",
+      "type": "LONG"
+    },
+    {
+      "name": "post_replied_id",
+      "type": "LONG"
+    },
+    {
+      "name": "isPostFlag",
+      "type": "INT"
+    }
+  ]
+}
