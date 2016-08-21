@@ -1,4 +1,4 @@
-package publisher.schedular;
+package publisher.schedular.util;
 
 /**
  * Created by sajith on 8/2/16.

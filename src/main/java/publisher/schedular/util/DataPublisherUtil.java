@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package publisher;
+package publisher.schedular.util;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
