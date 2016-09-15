@@ -14,14 +14,29 @@ import java.util.Timer;
 public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
     private static final long POLLING_INTERVAL = 10000l;
     private static final long EVALUATE_INTERVAL = 11000l;
-    private static final long GRACE_PERIOD = 60 * 1000l;
+    private static final long GRACE_PERIOD = 5 * 1000l;
 
 
     Timer inputReaderTaskTimer = new Timer();
     private AtomicDouble currentLatency = new AtomicDouble(0l);
+    private long currentElapsedTime = 0l;
+    private boolean stopped = true;
+
+    public synchronized void start(){
+        stopped = false;
+    }
+
+    public synchronized void stop(){
+        stopped = true;
+    }
+
+    public double getCurrentLatency(){
+        return currentLatency.get();
+    }
 
     @Override
-    public void onStatisticsRead(double latency, double throughput) {
+    public void onStatisticsRead(long elapsedTime, double latency, double throughput) {
+        currentElapsedTime = elapsedTime;
         currentLatency.set(latency);
     }
 
@@ -31,6 +46,11 @@ public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
         inputReaderTaskTimer.schedule(inputReaderTask, GRACE_PERIOD, POLLING_INTERVAL);
         try {
             while (true) {
+                if (stopped){
+                    Thread.sleep(EVALUATE_INTERVAL);
+                    continue;
+                }
+
                 if (shouldPublishToPublicClould()) {
                     ResearchEventPublisher.StartSendingToPublicCloud();
                 } else {
@@ -44,14 +64,14 @@ public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
     }
 
     public boolean shouldPublishToPublicClould(){
-        double latecny  = currentLatency.get();
-        if (latecny > SwitchingConfigurations.getPublicCloudPublishThresholdLatency()){
-            System.out.println("{ "+ new Date().toString() + "}  - Latency greater than threshold latency. Send data to PUBLIC cloud [Current Latency:"
-                    + latecny + " , Threshold Latency : " + SwitchingConfigurations.getPublicCloudPublishThresholdLatency() + "]");
+        double latency  = currentLatency.get();
+        if (latency > SwitchingConfigurations.getPublicCloudPublishThresholdLatency()){
+            System.out.println("{ "+ new Date().toString() + ":" + currentElapsedTime + "}  - Latency greater than threshold latency. Send data to PUBLIC cloud [Current Latency:"
+                    + latency + " , Threshold Latency : " + SwitchingConfigurations.getPublicCloudPublishThresholdLatency() + "]");
             return true;
         } else {
-            System.out.println("{ "+ new Date().toString() + "}  - Latency less than threshold latency. Send data to PRIVATE cloud [Current Latency:"
-                    + latecny + " , Threshold Latency : " + SwitchingConfigurations.getPublicCloudPublishThresholdLatency() + "]");
+            System.out.println("{ "+ new Date().toString() + ":" + currentElapsedTime + "}  - Latency less than threshold latency. Send data to PRIVATE cloud [Current Latency:"
+                    + latency + " , Threshold Latency : " + SwitchingConfigurations.getPublicCloudPublishThresholdLatency() + "]");
             return false;
         }
     }

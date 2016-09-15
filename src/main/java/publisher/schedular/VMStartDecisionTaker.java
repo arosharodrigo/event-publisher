@@ -1,7 +1,6 @@
 package publisher.schedular;
 
 import com.google.common.util.concurrent.AtomicDouble;
-import com.hazelcast.nio.Data;
 import publisher.ResearchEventPublisher;
 import publisher.schedular.util.StatisticsInputReaderTask;
 import publisher.schedular.util.StatisticsListener;
@@ -15,46 +14,65 @@ import java.util.TimerTask;
  * Created by sajith on 8/3/16.
  */
 public class VMStartDecisionTaker implements Runnable, StatisticsListener {
-    private static final long POLLING_INTERVAL = 10000l;
-    private static final long EVALUATE_INTERVAL = 11000l;
+    private static final long POLLING_INTERVAL = 5000l;
+    private static final long EVALUATE_INTERVAL = 6000l;
     private static final long GRACE_PERIOD = 60 * 1000l;
 
     private  AtomicDouble currentLatency = new AtomicDouble(0l);
-    private TolerancePeriodTimer tolerancePeriodTimerTask = null;
+    private long currentElapsedTime = 0;
+    private TolerancePeriodTask tolerancePeriodTask = null;
     Timer inputReaderTaskTimer = new Timer();
     Timer toleranceTimer = new Timer();
+    private boolean stopped = false;
+    StatisticsInputReaderTask inputReaderTask = new StatisticsInputReaderTask(this);
+
+    public synchronized void start(){
+        stopped = false;
+    }
+
+    public synchronized void stop(){
+        stopped = true;
+        tolerancePeriodTask.cancel();
+        tolerancePeriodTask = null;
+    }
 
     private boolean evaluate(){
         Double latency = currentLatency.get();
-        if (latency > SwitchingConfigurations.getGetThresholdLatency()){
-            System.out.println("Latency is less than threshold[Current Latency :" + latency
-                    + ", Threshold latency " + SwitchingConfigurations.getGetThresholdLatency() +" ]");
+        if (latency > SwitchingConfigurations.getVmStartTriggerThresholdLatency()){
+            /*System.out.println("{" + new Date().toString() + ":" + currentElapsedTime + "} - Latency is greater than threshold[Current Latency :" + latency
+                    + ", Threshold latency " + SwitchingConfigurations.getVmStartTriggerThresholdLatency() +" ]");*/
             return true;
         } else {
+            /*System.out.println("{" + new Date().toString() + ":" + currentElapsedTime + "} - Latency is less than threshold[Current Latency :" + latency
+                    + ", Threshold latency " + SwitchingConfigurations.getVmStartTriggerThresholdLatency() +" ]");*/
             return false;
         }
     }
 
     @Override
     public void run() {
-        StatisticsInputReaderTask inputReaderTask = new StatisticsInputReaderTask(this);
-
         inputReaderTaskTimer.schedule(inputReaderTask, GRACE_PERIOD, POLLING_INTERVAL);
         try {
             while (true){
+                if (stopped){
+                    Thread.sleep(EVALUATE_INTERVAL);
+                    continue;
+                }
+
                 if (evaluate()){
-                    if (tolerancePeriodTimerTask == null){
-                        tolerancePeriodTimerTask = new TolerancePeriodTimer();
-                        toleranceTimer.schedule(tolerancePeriodTimerTask,  SwitchingConfigurations.getTolerancePeriod());
-                        System.out.println("Starting the tolerance timer at " + new Date().toString());
+                    if (tolerancePeriodTask == null){
+                        tolerancePeriodTask = new TolerancePeriodTask();
+                        toleranceTimer.schedule(tolerancePeriodTask,  SwitchingConfigurations.getTolerancePeriod());
+                        System.out.println("{" + new Date().toString() + ":" + currentElapsedTime + "}[EVENT] - Starting the tolerance timer");
                     } else {
-                        System.out.println("Tolerance timer is already running");
+                        //System.out.println("Tolerance timer is already running");
                     }
                 } else {
-                    if (tolerancePeriodTimerTask != null){
-                        tolerancePeriodTimerTask.cancel();
-                        tolerancePeriodTimerTask = null;
-                        System.out.println("Latency has recovered with in tolerance time period, stopping tolerance timer at " + new Data().toString());
+                    if (tolerancePeriodTask != null){
+                        tolerancePeriodTask.cancel();
+                        tolerancePeriodTask = null;
+                        System.out.println("{" + new Date().toString() + ":" + currentElapsedTime +
+                                "}[EVENT] - Latency has recovered with in tolerance time period, stopping tolerance timer at ");
                     }
                 }
                 Thread.sleep(EVALUATE_INTERVAL);
@@ -66,17 +84,16 @@ public class VMStartDecisionTaker implements Runnable, StatisticsListener {
     }
 
     @Override
-    public void onStatisticsRead(double latency, double throughput) {
+    public void onStatisticsRead(long elapsedTime, double latency, double throughput) {
         currentLatency.set(latency);
-        System.out.println("Setting Latency...... " +  latency);
+        currentElapsedTime = elapsedTime;
     }
 
-    class TolerancePeriodTimer extends TimerTask{
+    class TolerancePeriodTask extends TimerTask{
         @Override
         public void run() {
-            System.out.println("Tolerance period is over, starting VM at " + new Date().toString());
-            inputReaderTaskTimer.cancel();
-            toleranceTimer.cancel();
+            System.out.println("{" + new Date().toString() + ":" + currentElapsedTime + "}[EVENT] - Tolerance period is over. starting Virtual Machine");
+            tolerancePeriodTask.cancel();
             ResearchEventPublisher.StartVM();
         }
     }

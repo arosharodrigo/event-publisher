@@ -10,9 +10,9 @@ public class SwitchingConfigurations {
     private static double thresholdThroughput;
 
     /**
-     * Threshold latency for in milliseconds
+     * Threshold latency for start the VM in milliseconds
      */
-    private static double getThresholdLatency;
+    private static double vmStartTriggerThresholdLatency;
 
     /**
      * IP and port of the public cloud server which receives event.
@@ -78,12 +78,12 @@ public class SwitchingConfigurations {
         SwitchingConfigurations.thresholdThroughput = thresholdThroughput;
     }
 
-    public static double getGetThresholdLatency() {
-        return getThresholdLatency;
+    public static double getVmStartTriggerThresholdLatency() {
+        return vmStartTriggerThresholdLatency;
     }
 
-    public static void setGetThresholdLatency(double getThresholdLatency) {
-        SwitchingConfigurations.getThresholdLatency = getThresholdLatency;
+    public static void setThresholdLatency(double getThresholdLatency) {
+        SwitchingConfigurations.vmStartTriggerThresholdLatency = getThresholdLatency;
     }
 
     public static Endpoint getPublicCloudEndpoint() {

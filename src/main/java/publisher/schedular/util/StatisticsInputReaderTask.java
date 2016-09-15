@@ -17,6 +17,7 @@ public class StatisticsInputReaderTask extends TimerTask {
 
     private static final int CURRENT_THROUGHPUT_COLUMN = 3;
     private static final int CURRENT_LATENCY_COLUMN = 4;
+    private static final int ELAPSED_TIME_COLUMN = 0;
 
     public void readCurrentValuesFromFile() {
         try {
@@ -30,10 +31,11 @@ public class StatisticsInputReaderTask extends TimerTask {
 
             if (lastLine != null) {
                 String[] values = lastLine.split(",");
+                long elapsedTime = values[ELAPSED_TIME_COLUMN].equals("0.0")? 0L : Long.parseLong(values[ELAPSED_TIME_COLUMN]);
                 double latency = Double.parseDouble(values[CURRENT_LATENCY_COLUMN]);
                 double throughput = Double.parseDouble(values[CURRENT_THROUGHPUT_COLUMN]);
-                statisticsListener.onStatisticsRead(latency, throughput);
-                System.out.println("Reading statistics. Throughput : " + throughput + ", Latency : " + latency);
+                statisticsListener.onStatisticsRead(elapsedTime, latency, throughput);
+                //System.out.println("Reading statistics. Throughput : " + throughput + ", Latency : " + latency);
             }
             input.close();
         } catch (Exception e) {

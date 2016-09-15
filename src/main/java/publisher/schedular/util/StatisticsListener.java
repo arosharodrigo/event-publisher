@@ -5,5 +5,5 @@ package publisher.schedular.util;
  */
 public interface StatisticsListener {
 
-    void onStatisticsRead(double latency, double throughput);
+    void onStatisticsRead(long elapsedTime, double latency, double throughput);
 }

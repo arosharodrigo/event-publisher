@@ -3,6 +3,7 @@ package publisher.schedular.vm;
 import publisher.ResearchEventPublisher;
 import publisher.schedular.util.SwitchingConfigurations;
 
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -17,6 +18,10 @@ public class VMSimulator {
         vmStartTimer.schedule(new VMStartDelayTimerTask(),  SwitchingConfigurations.getVmStartDelay());
     }
 
+    public void keepTheVM(){
+        vmSessionTimer.schedule(new VMSessionTimerTask(), SwitchingConfigurations.getVmBillingSessionDuration());
+    }
+
     class VMStartDelayTimerTask extends TimerTask{
 
         /**
@@ -24,7 +29,7 @@ public class VMSimulator {
          */
         @Override
         public void run() {
-            System.out.println("VM has started....");
+            System.out.println("{" + new Date().toString() + "}[EVENT] - VM has started");
             ResearchEventPublisher.OnVmStarted();
             vmSessionTimer.schedule(new VMSessionTimerTask(), SwitchingConfigurations.getVmBillingSessionDuration());
         }
@@ -34,7 +39,7 @@ public class VMSimulator {
 
         @Override
         public void run() {
-            System.out.println("VM is ready to shutdown.");
+            System.out.println("{" + new Date().toString() + "}[EVENT] - VM is ready to shutdown.");
             ResearchEventPublisher.OnVMSessionAboutToExpire();
         }
     }

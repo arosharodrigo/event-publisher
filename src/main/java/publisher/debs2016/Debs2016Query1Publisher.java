@@ -42,6 +42,8 @@ public class Debs2016Query1Publisher extends Publishable {
         private LinkedBlockingQueue<Object[]> eventBufferList[];
         public boolean doneFlag = false;
 
+        private int sentCount = 0;
+
         /**
          * The constructor
          *
@@ -52,6 +54,15 @@ public class Debs2016Query1Publisher extends Publishable {
             this.eventBufferList = eventBuffer;
         }
 
+    public void publish(Object[] event) throws InterruptedException {
+       //ResearchEventPublisher.publishEvent(event, getStreamId());
+       ResearchEventPublisher.publishMultiplePublishers(event, getStreamId(), ResearchEventPublisher.DEBS_Q1_ID);
+        sentCount++;
+        if (sentCount % 6000 == 0){
+            Thread.sleep(1 * 1000);
+            //System.out.println(sentCount + " events sent by DEBS Query 1");
+        }
+    }
 
     public void run() {
         Object[] commentEvent = null;
@@ -78,7 +89,7 @@ public class Debs2016Query1Publisher extends Publishable {
                     };
                     systemCurrentTime = System.currentTimeMillis();
                     firstPostEvent[Constants.INPUT_INJECTION_TIMESTAMP_FIELD] = systemCurrentTime;
-                    ResearchEventPublisher.publishEvent(firstPostEvent, getStreamId());
+                    publish(firstPostEvent);
                     //We print the start and the end times of the experiment even if the performance logging is disabled.
                     firstEvent = false;
                 }
@@ -148,13 +159,13 @@ public class Debs2016Query1Publisher extends Publishable {
 
                     systemCurrentTime = System.currentTimeMillis();
                     commentEvent[Constants.INPUT_INJECTION_TIMESTAMP_FIELD] = systemCurrentTime; //This corresponds to the iij_timestamp
-                    ResearchEventPublisher.publishEvent(commentEvent, getStreamId());
+                    publish(commentEvent);
                     flag = Constants.COMMENTS;
                 } else if (timestampPost != Long.MAX_VALUE) {
 
                     systemCurrentTime = System.currentTimeMillis();
                     postEvent[Constants.INPUT_INJECTION_TIMESTAMP_FIELD] = systemCurrentTime; //This corresponds to the iij_timestamp
-                    ResearchEventPublisher.publishEvent(postEvent, getStreamId());
+                    publish(postEvent);
                     flag = Constants.POSTS;
                 }
 
@@ -175,7 +186,7 @@ public class Debs2016Query1Publisher extends Publishable {
                     systemCurrentTime = System.currentTimeMillis();
                     finalPostEvent[Constants.INPUT_INJECTION_TIMESTAMP_FIELD] = systemCurrentTime;
                     Thread.sleep(1000);//We just sleep for short period so that we can ensure that all the data events have been processed by the ranker properly before we shutdown.
-                    ResearchEventPublisher.publishEvent(finalPostEvent, getStreamId());
+                    publish(finalPostEvent);
                     doneFlag = true;
                     break;
                 }

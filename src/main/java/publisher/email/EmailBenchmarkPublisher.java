@@ -14,14 +14,57 @@ import java.util.List;
 /**
  * Created by sajith on 7/24/16.
  */
-public class EmailBenchmarkPublisher extends Publishable{
+public class EmailBenchmarkPublisher extends Publishable implements Runnable{
 
+    private int sentCount = 0;
+    Object[] outofOrderEvent = null;
     public EmailBenchmarkPublisher() {
         super("inputEmailsStream:1.0.0", "/home/sajith/research/email-benchmark/EmailDataSet/enron.avro");
     }
 
+    public void publish(Object[] event) throws InterruptedException {
+        //ResearchEventPublisher.publishEvent(event, getStreamId());
+
+        if (sentCount % 10 == 0){
+            if (outofOrderEvent != null){
+                ResearchEventPublisher.sendOutofOrder(outofOrderEvent, getStreamId(), true);
+            }
+            outofOrderEvent = event;
+        } else {
+            ResearchEventPublisher.sendOutofOrder(outofOrderEvent, getStreamId(), false);
+        }
+        sentCount++;
+
+
+        /*
+        ResearchEventPublisher.publishMultiplePublishers(event, getStreamId(), ResearchEventPublisher.EMAIL_PROCESSOR_ID);
+        sentCount++;
+        if (sentCount % 10800 == 0){
+            Thread.sleep(1 * 1000);
+            //System.out.println(sentCount + "Events sent in Email Processor benchmark");
+        }
+        */
+    }
+
     @Override
     public void startPublishing() {
+        Thread publisherThread = new Thread(this);
+        publisherThread.start();
+    }
+
+    /**
+     * When an object implementing interface <code>Runnable</code> is used
+     * to create a thread, starting the thread causes the object's
+     * <code>run</code> method to be called in that separately executing
+     * thread.
+     * <p/>
+     * The general contract of the method <code>run</code> is that it may
+     * take any action whatsoever.
+     *
+     * @see Thread#run()
+     */
+    @Override
+    public void run() {
         try {
             String toAddresses = null;
             String ccAddresses = null;
@@ -94,8 +137,7 @@ public class EmailBenchmarkPublisher extends Publishable{
 
                 //events.add(new Object[]{System.currentTimeMillis(), from, toAddresses, ccAddresses, bccAddresses, subject, body, "(.*)@enron.com"});
                 for (int i = 0; i < 100; i ++) {
-                    ResearchEventPublisher.publishEvent(new Object[]{System.currentTimeMillis(), from, toAddresses, ccAddresses, bccAddresses, subject, body, "(.*)@enron.com"},
-                            getStreamId());
+                    publish(new Object[]{System.currentTimeMillis(), from, toAddresses, ccAddresses, bccAddresses, subject, body, "(.*)@enron.com"});
                 }
 
             }

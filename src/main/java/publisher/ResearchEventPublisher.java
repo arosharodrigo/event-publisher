@@ -24,18 +24,22 @@ import org.wso2.carbon.databridge.agent.AgentHolder;
 import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.databridge.commons.Event;
 import org.wso2.carbon.databridge.commons.StreamDefinition;
+import publisher.debs2016.Debs2016Query1Publisher;
 import publisher.email.EmailBenchmarkPublisher;
 import publisher.schedular.VMStartDecisionTaker;
 import publisher.schedular.util.DataPublisherUtil;
 import publisher.schedular.util.SwitchingConfigurations;
 import publisher.schedular.vm.VMSimulator;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 //mvn exec:java -Dexec.mainClass="publisher.ResearchEventPublisher"
 public class ResearchEventPublisher{
+    public static final int EMAIL_PROCESSOR_ID = 1;
+    public static final int DEBS_Q1_ID = 2;
+
     private static Log log = LogFactory.getLog(ResearchEventPublisher.class);
     private static DataPublisher privateDataPublisher;
     private static DataPublisher currentDataPublisher;
@@ -45,16 +49,19 @@ public class ResearchEventPublisher{
     private static long startTime = System.currentTimeMillis();
     private static int count = 0;
     private static boolean sendToPublicCloud = false;
-    private static int publicCloudPublishingRatio = 5; // Tells how much events to be published to public cloud for every 10 events;
+    private static int publicCloudPublishingRatio = 3; // Tells how much events to be published to public cloud for every 10 events;
     private static int currentPublicPublishCount = 0;
     private static int privateSent = 0;
     private static int publicSent = 0;
 
+
     //This thread runs the evaluation to decide  if we need to start a VM on public cloud
-    private static Thread vmDecisionTakerThread = new Thread(new VMStartDecisionTaker());
+    private static VMStartDecisionTaker vmDecisionTaker = new VMStartDecisionTaker();
+    private static Thread vmDecisionTakerThread = new Thread(vmDecisionTaker);
 
     // This thread runs the evaluation to decide if we need to send data to public cloud. This thread is run only when VM is started.
-    private static Thread dataPublishDecisionTakerThread = new Thread(new DataPublishDecisionTaker());
+    private static DataPublishDecisionTaker dataPublishDecisionTaker = new DataPublishDecisionTaker();
+    private static Thread dataPublishDecisionTakerThread = new Thread(dataPublishDecisionTaker);
 
     private static VMSimulator vmSimulator = new VMSimulator();
 
@@ -67,16 +74,14 @@ public class ResearchEventPublisher{
         System.setProperty("javax.xml.parsers.SAXParserFactory","com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl");
 
         try {
-
-            NetworkInterface.getNetworkInterfaces();
-            InetAddress.getLocalHost();
-
-            SwitchingConfigurations.setGetThresholdLatency(20 * 1000);
+            SwitchingConfigurations.setThresholdLatency(10 * 1000);
             SwitchingConfigurations.setThresholdThroughput(7500);
-            SwitchingConfigurations.setTolerancePeriod(40 * 1000);
+            SwitchingConfigurations.setTolerancePeriod(20 * 1000);
             SwitchingConfigurations.setVmStartDelay(10 * 1000);
-            SwitchingConfigurations.setVmBillingSessionDuration(30*1000);
-            SwitchingConfigurations.setPublicCloudEndpoint("192.168.1.5", 7611);
+            SwitchingConfigurations.setVmBillingSessionDuration(60*1000);
+            SwitchingConfigurations.setPublicCloudEndpoint("192.168.1.4", 7611);
+            SwitchingConfigurations.setMinEventsToKeepVm(100000);
+            SwitchingConfigurations.setPublicCloudPublishThresholdLatency(12 * 1000);
 
             System.out.println("Starting WSO2 Event ResearchEventPublisher Stream CLient");
             AgentHolder.setConfigPath(DataPublisherUtil.filePath + "/src/main/java/files/configs/data-agent-config.xml");
@@ -89,27 +94,24 @@ public class ResearchEventPublisher{
             privateDataPublisher = new DataPublisher(protocol,  singleNodeHost , null, username, password);
             currentDataPublisher = privateDataPublisher;
 
-            //publicDataPublisher = new DataPublisher(protocol, "tcp://" + SwitchingConfigurations.getPublicCloudEndpoint().toString(), null, username, password);
+            publicDataPublisher = new DataPublisher(protocol, "tcp://" + SwitchingConfigurations.getPublicCloudEndpoint().toString(), null, username, password);
 
 
             //Setting Threshold values for Switching
-            Publishable publisher = new EmailBenchmarkPublisher();
-            //Publishable publisher = new Debs2016Query1Publisher();
+            Publishable emailProcessorPublisher = new EmailBenchmarkPublisher();
+            Publishable debs2016Query1Publisher = new Debs2016Query1Publisher();
             //Publishable publisher = new Debs2016Query2Publisher();
 
-            Map<String, StreamDefinition> streamDefinitions = DataPublisherUtil.loadStreamDefinitions();
-            streamDefinition = streamDefinitions.get(publisher.getStreamId());
-
-            if (streamDefinition == null) {
-                throw new Exception("StreamDefinition not available for stream " + publisher.getStreamId());
-            } else {
-                log.info("StreamDefinition used :" + streamDefinition);
-            }
+            DataPublisherUtil.loadStreamDefinitions();
 
 
+            vmDecisionTaker.start();
             vmDecisionTakerThread.start();
+            dataPublishDecisionTakerThread.start();
 
-            publisher.startPublishing();
+            emailProcessorPublisher.startPublishing();
+            //debs2016Query1Publisher.startPublishing();
+
             System.out.println("Public :" + publicSent);
             System.out.println("Private : " + privateSent);
         } catch (Throwable e) {
@@ -137,51 +139,111 @@ public class ResearchEventPublisher{
 
         currentDataPublisher.tryPublish(event);
 
-            if (currentDataPublisher == publicDataPublisher){
-                if (++currentPublicPublishCount == publicCloudPublishingRatio){
-                    currentDataPublisher = privateDataPublisher;
-                    currentPublicPublishCount = 0;
-                }
+        if (currentDataPublisher == publicDataPublisher){
+            if (++currentPublicPublishCount == publicCloudPublishingRatio){
+                currentDataPublisher = privateDataPublisher;
+                currentPublicPublishCount = 0;
             }
+        }
 
-
-            if (++count % 12000 == 0) {
-                Thread.sleep(1000);
-                //System.out.println(count + " Events published in " + (System.currentTimeMillis() - startTime) + "ms");
-                //System.out.println("Public :" + publicSent);
-                //System.out.println("Private : " + privateSent);
-                startTime = System.currentTimeMillis();
-            }
+        if (++count % 12000 == 0) {
+            Thread.sleep(1000);
+            //System.out.println(count + " Events published in " + (System.currentTimeMillis() - startTime) + "ms");
+            //System.out.println("Public :" + publicSent);
+            //System.out.println("Private : " + privateSent);
+            startTime = System.currentTimeMillis();
+        }
     }
 
+    public static  void publishEvent(Object[] eventPayload, String streamId, int id) throws InterruptedException {
+
+        Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+
+        if (sendToPublicCloud && (currentDataPublisher != publicDataPublisher) && (id == EMAIL_PROCESSOR_ID)){
+            if (count % 100 == 0){
+                currentDataPublisher = publicDataPublisher;
+            }
+        }
+
+        if (currentDataPublisher == publicDataPublisher){
+            publicSent++;
+        } else {
+            privateSent++;
+        }
+
+        currentDataPublisher.tryPublish(event);
+
+        if (currentDataPublisher == publicDataPublisher){
+            if (++currentPublicPublishCount == publicCloudPublishingRatio){
+                currentDataPublisher = privateDataPublisher;
+                currentPublicPublishCount = 0;
+            }
+        }
+
+        count++;
+    }
+
+    public synchronized static void publishMultiplePublishers(Object[] eventPayload, String streamId, int id) throws InterruptedException {
+
+       // publishEvent(eventPayload, streamId, id);
+
+        Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+
+        if (sendToPublicCloud && id == DEBS_Q1_ID){
+            publicDataPublisher.tryPublish(event);
+        } else{
+            publishEvent(eventPayload, streamId);
+        }
+    }
+
+    public static void sendOutofOrder(Object[] eventPayload, String streamId, boolean isOutOfOrder) throws InterruptedException {
+        Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+
+        if (!isOutOfOrder && sendToPublicCloud){
+            publishEvent(eventPayload, streamId);
+        } else{
+            privateDataPublisher.tryPublish(event);
+        }
+
+        if (++count % 12000 == 0) {
+            Thread.sleep(1000);
+        }
+    }
     /**
      * Call back for VMStartDecisionTaker to notify publisher to trigger start of VM
      */
     public static void StartVM() {
-        System.out.println("Starting the at " + new Date().toString());
+        System.out.println("{" + new Date().toString() + "} - VM Startup initiating");
         vmSimulator.startVM();
-        vmDecisionTakerThread.stop();
+        vmDecisionTaker.stop();
     }
 
     /**
      * Call back for VMSimulator to notify start of VM
      */
     public static void OnVmStarted(){
-        System.out.println("VM Has started at " + new Date().toString());
-        dataPublishDecisionTakerThread.start();
+        System.out.println("{" + new Date().toString() + "} - VM Has started.");
+        dataPublishDecisionTaker.start();
     }
 
     /**
      * Callback for VMSimulator to notify Shutdown of VM
      */
     public static void OnVMSessionAboutToExpire(){
-        System.out.println("VM is going to shutdown in a while at " + new Date().toString());
-        if (SwitchingConfigurations.getMinEventsToKeepVm() < publicSent){
+        System.out.println("{" + new Date().toString() + "} - VM is going to shutdown in a while");
+        if (SwitchingConfigurations.getMinEventsToKeepVm() > publicSent &&
+                dataPublishDecisionTaker.getCurrentLatency() < SwitchingConfigurations.getVmStartTriggerThresholdLatency()){
             // This is simulating VM shutdown.
             publicSent = 0; // Reset the public event sent count
-            dataPublishDecisionTakerThread.stop(); // Stop decision thread to which evaluates if we need to publish data to public cloud
+            dataPublishDecisionTaker.stop(); // Stop decision thread to which evaluates if we need to publish data to public cloud
             sendToPublicCloud = false; // Stop publishing data to VM
-            vmDecisionTakerThread.start(); // Start the VMStartDecision take thread to see if we need a VM again in the future.
+            vmDecisionTaker.start(); // Start the VMStartDecision take thread to see if we need a VM again in the future.
+            System.out.println("{" + new Date().toString() + "}[EVENT] - No enough events sent to public cloud. Shutting down the instance.");
+        } else {
+            vmSimulator.keepTheVM();
+            System.out.println("{" + new Date().toString() + "}[EVENT] -" + publicSent + " Events sent to public cloud. Keeping the VM instance.");
+            publicSent = 0;
+
         }
     }
 
@@ -189,7 +251,6 @@ public class ResearchEventPublisher{
      * Callback for DataPublisherDecisionTaker to notify start sending to public cloud
      */
     public static void StartSendingToPublicCloud(){
-        System.out.println("Start Sending to public Cloud");
         sendToPublicCloud = true;
     }
 
@@ -197,7 +258,6 @@ public class ResearchEventPublisher{
      * Callback for DataPublisherDecisionTaker to notify the stop of sending to public cloud
      */
     public static void StopSendingToPublicCloud(){
-        System.out.println("Stop Sending to public Cloud");
         sendToPublicCloud = false;
     }
 }
