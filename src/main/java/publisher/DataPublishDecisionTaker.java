@@ -56,6 +56,12 @@ public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
                 } else {
                     ResearchEventPublisher.StopSendingToPublicCloud();
                 }
+
+                if (shouldSendToSecondaryInstance()){
+                    ResearchEventPublisher.SendToSecondaryInstance();
+                } else {
+                    ResearchEventPublisher.StopSendingToSecondaryInstance();
+                }
                 Thread.sleep(EVALUATE_INTERVAL);
             }
         } catch (Exception e){
@@ -72,6 +78,20 @@ public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
         } else {
             System.out.println("{ "+ new Date().toString() + ":" + currentElapsedTime + "}  - Latency less than threshold latency. Send data to PRIVATE cloud [Current Latency:"
                     + latency + " , Threshold Latency : " + SwitchingConfigurations.getPublicCloudPublishThresholdLatency() + "]");
+            return false;
+        }
+    }
+
+    public boolean shouldSendToSecondaryInstance(){
+        double latency = currentLatency.get();
+        if (latency > SwitchingConfigurations.getSecondaryVmDataPublishThreshold()){
+            System.out.println("{ "+ new Date().toString() + ":" + currentElapsedTime + "}  - Latency greater than threshold latency. Send data to PUBLIC Secondary Instance[Current Latency:"
+                    + latency + " , Threshold Latency : " + SwitchingConfigurations.getSecondaryVmDataPublishThreshold() + "]");
+            return true;
+
+        }else {
+            System.out.println("{ "+ new Date().toString() + ":" + currentElapsedTime + "}  - Latency less than threshold latency. Don't Send data to Public Secondary Instance [Current Latency:"
+                    + latency + " , Threshold Latency : " + SwitchingConfigurations.getSecondaryVmDataPublishThreshold() + "]");
             return false;
         }
     }

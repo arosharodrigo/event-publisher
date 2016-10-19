@@ -20,6 +20,14 @@ public class DataLoaderThread extends Thread{
     private final FileType fileType;
     private static final String MINUS_ONE = "-1";
 
+    private long postCount;
+    private long postSize;
+    private long commentCount;
+    private long commentSize;
+    private long friendshipCount;
+    private long friendshipSize;
+    private long likesCount;
+    private long likesSize;
     /**
      * The constructor
      *
@@ -65,7 +73,8 @@ public class DataLoaderThread extends Thread{
                                 Constants.POSTS
                         };
                         eventBufferList.put(eventData);
-
+                        postCount++;
+                        postSize += 28 + post.length() + user.length();
                         break;
                     case COMMENTS:
                         String commentTimeStampString = dataStreamIterator.next();
@@ -103,7 +112,8 @@ public class DataLoaderThread extends Thread{
                                 Constants.COMMENTS
                         };
                         eventBufferList.put(eventData);
-
+                        commentCount++;
+                        commentSize += 30 + user.length() + comment.length();
                         break;
                     case FRIENDSHIPS:
                         String friendshipsTimeStampString = dataStreamIterator.next();
@@ -126,6 +136,8 @@ public class DataLoaderThread extends Thread{
                                 Constants.FRIENDSHIPS
                         };
                         eventBufferList.put(eventData);
+                        friendshipCount++;
+                        friendshipSize += 30;
                         break;
                     case LIKES:
                         String likeTimeStampString = dataStreamIterator.next(); //e.g., 2010-02-09T04:05:20.777+0000
@@ -148,10 +160,17 @@ public class DataLoaderThread extends Thread{
                                 Constants.LIKES
                         };
                         eventBufferList.put(eventData);
+                        likesCount++;
+                        likesSize += 30;
                         break;
                 }
                 line = bufferedReader.readLine();
             }
+
+            System.out.println("Posts=" + postCount + "," + postSize);
+            System.out.println("Comments=" + commentCount + "," + commentSize);
+            System.out.println("Friendship=" + friendshipCount + "," + friendshipSize);
+            System.out.println("Likes=" + likesCount + "," +likesSize);
 
             Long postsTimeStampLong = -1L;
             Long postID = -1L;

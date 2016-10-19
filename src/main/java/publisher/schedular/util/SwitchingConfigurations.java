@@ -45,6 +45,45 @@ public class SwitchingConfigurations {
      */
     private static long minEventsToKeepVm;
 
+    /**
+     * The threshold latency to start the second VM.
+     */
+    private static long secondaryVmStartupThreshold;
+
+    public static long getSecondaryVmDataPublishThreshold() {
+        return secondaryVmDataPublishThreshold;
+    }
+
+    public static void setSecondaryVmDataPublishThreshold(long secondaryVmDataPublishThreshold) {
+        SwitchingConfigurations.secondaryVmDataPublishThreshold = secondaryVmDataPublishThreshold;
+    }
+
+    /**
+     * The threshold latency to start the second VM.
+     */
+    private static long secondaryVmDataPublishThreshold;
+
+    /**
+     * Number of times to see the secondary VM start up threshold to initiate the secondary VM start up
+     */
+    private static int secondaryVmStartupThresholdConsecutiveCount;
+
+    public static int getSecondaryVmStartupThresholdConsecutiveCount() {
+        return secondaryVmStartupThresholdConsecutiveCount;
+    }
+
+    public static void setSecondaryVmStartupThresholdConsecutiveCount(int secondaryVmStartupThresholdConsecutiveCount) {
+        SwitchingConfigurations.secondaryVmStartupThresholdConsecutiveCount = secondaryVmStartupThresholdConsecutiveCount;
+    }
+
+    public static long getSecondaryVmStartupThreshold() {
+        return secondaryVmStartupThreshold;
+    }
+
+    public static void setSecondaryVmStartupThreshold(long secondaryVmStartupThreshold) {
+        SwitchingConfigurations.secondaryVmStartupThreshold = secondaryVmStartupThreshold;
+    }
+
     public static long getVmBillingSessionDuration() {
         return vmBillingSessionDuration;
     }

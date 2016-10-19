@@ -1,0 +1,20 @@
+{
+  "name": "reducedEmailInputStream",
+  "version": "1.0.0",
+  "nickName": "",
+  "description": "",
+  "payloadData": [
+    {
+      "name": "fromAddress",
+      "type": "STRING"
+    },
+    {
+      "name": "toAddresses",
+      "type": "STRING"
+    },
+    {
+      "name": "body",
+      "type": "STRING"
+    }
+  ]
+}

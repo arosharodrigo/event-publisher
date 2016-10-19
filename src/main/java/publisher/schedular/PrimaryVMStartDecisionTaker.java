@@ -13,8 +13,8 @@ import java.util.TimerTask;
 /**
  * Created by sajith on 8/3/16.
  */
-public class VMStartDecisionTaker implements Runnable, StatisticsListener {
-    private static final long POLLING_INTERVAL = 5000l;
+public class PrimaryVMStartDecisionTaker implements Runnable, StatisticsListener {
+    private static final long POLLING_INTERVAL = 3000l;
     private static final long EVALUATE_INTERVAL = 6000l;
     private static final long GRACE_PERIOD = 60 * 1000l;
 
@@ -94,7 +94,7 @@ public class VMStartDecisionTaker implements Runnable, StatisticsListener {
         public void run() {
             System.out.println("{" + new Date().toString() + ":" + currentElapsedTime + "}[EVENT] - Tolerance period is over. starting Virtual Machine");
             tolerancePeriodTask.cancel();
-            ResearchEventPublisher.StartVM();
+            ResearchEventPublisher.StartVM(ResearchEventPublisher.VM_ID_PRIMARY);
         }
     }
 

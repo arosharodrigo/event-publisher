@@ -1,7 +1,6 @@
 package publisher.debs2016;
 
 import publisher.Publishable;
-import publisher.ResearchEventPublisher;
 
 import java.io.File;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -41,7 +40,6 @@ public class Debs2016Query1Publisher extends Publishable {
 
         private LinkedBlockingQueue<Object[]> eventBufferList[];
         public boolean doneFlag = false;
-
         private int sentCount = 0;
 
         /**
@@ -56,12 +54,14 @@ public class Debs2016Query1Publisher extends Publishable {
 
     public void publish(Object[] event) throws InterruptedException {
        //ResearchEventPublisher.publishEvent(event, getStreamId());
-       ResearchEventPublisher.publishMultiplePublishers(event, getStreamId(), ResearchEventPublisher.DEBS_Q1_ID);
+
+       //ResearchEventPublisher.publishMultiplePublishers(event, getStreamId(), ResearchEventPublisher.DEBS_Q1_ID);
         sentCount++;
-        if (sentCount % 6000 == 0){
-            Thread.sleep(1 * 1000);
+        if (sentCount % 1000 == 0){
+            //Thread.sleep(1 * 1000);
             //System.out.println(sentCount + " events sent by DEBS Query 1");
         }
+
     }
 
     public void run() {

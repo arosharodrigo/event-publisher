@@ -47,9 +47,9 @@
         <!--<TrustSorePassword>wso2carbon</TrustSorePassword>-->
         <QueueSize>32768</QueueSize>
         <BatchSize>1000</BatchSize>
-        <CorePoolSize>10</CorePoolSize>
+        <CorePoolSize>200</CorePoolSize>
         <SocketTimeoutMS>30000</SocketTimeoutMS>
-        <MaxPoolSize>20</MaxPoolSize>
+        <MaxPoolSize>220</MaxPoolSize>
         <KeepAliveTimeInPool>20</KeepAliveTimeInPool>
         <ReconnectionInterval>30</ReconnectionInterval>
         <MaxTransportPoolSize>250</MaxTransportPoolSize>
