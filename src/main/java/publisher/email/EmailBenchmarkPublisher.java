@@ -31,7 +31,7 @@ public class EmailBenchmarkPublisher extends Publishable implements Runnable{
     public void publish(Object[] event, int messageSize) throws InterruptedException {
 
         ResearchEventPublisher.publishEvent(event, getStreamId());
-        ResearchEventPublisher.addMessageSize(messageSize);
+        //ResearchEventPublisher.addMessageSize(messageSize);
 
         //====For Out Of Order Event Sending
         /*
@@ -180,17 +180,6 @@ public class EmailBenchmarkPublisher extends Publishable implements Runnable{
 
                 for (int i = 0; i < 100; i ++) {
                     publish(new Object[]{System.currentTimeMillis(), from, toAddresses, ccAddresses, bccAddresses, subject, body, "(.*)@enron.com"}, messageSize);
-
-                    /*
-                    publish(new Object[]{System.currentTimeMillis(),
-                            from,
-                            Compressor.compress(toAddresses),
-                            Compressor.compress(ccAddresses),
-                            Compressor.compress(bccAddresses),
-                            subject,
-                            Compressor.compress(body),
-                            "(.*)@enron.com"});
-                            */
                 }
             }
         } catch (Throwable t) {

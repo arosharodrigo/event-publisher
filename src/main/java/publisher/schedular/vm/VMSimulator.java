@@ -1,9 +1,7 @@
 package publisher.schedular.vm;
 
-import publisher.ResearchEventPublisher;
-import publisher.schedular.util.SwitchingConfigurations;
+import publisher.schedular.util.Configurations;
 
-import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -14,17 +12,19 @@ public class VMSimulator {
     Timer vmStartTimer =  new Timer();
     Timer vmSessionTimer = new Timer();
     private int id;
+    VMEventListener listener;
 
-    public VMSimulator(int id){
+    public VMSimulator(int id, VMEventListener listener){
         this.id = id;
+        this.listener = listener;
     }
 
     public void startVM(){
-        vmStartTimer.schedule(new VMStartDelayTimerTask(),  SwitchingConfigurations.getVmStartDelay());
+        vmStartTimer.schedule(new VMStartDelayTimerTask(),  Configurations.getVmStartDelay());
     }
 
     public void keepTheVM(){
-        vmSessionTimer.schedule(new VMSessionTimerTask(), SwitchingConfigurations.getVmBillingSessionDuration());
+        vmSessionTimer.schedule(new VMSessionTimerTask(), Configurations.getVmBillingSessionDuration());
     }
 
     class VMStartDelayTimerTask extends TimerTask{
@@ -34,9 +34,8 @@ public class VMSimulator {
          */
         @Override
         public void run() {
-            System.out.println("{" + new Date().toString() + "}[EVENT] - VM has started");
-            ResearchEventPublisher.OnVmStarted(id);
-            vmSessionTimer.schedule(new VMSessionTimerTask(), SwitchingConfigurations.getVmBillingSessionDuration());
+            listener.OnVMStarted(id);
+            vmSessionTimer.schedule(new VMSessionTimerTask(), Configurations.getVmBillingSessionDuration());
         }
     }
 
@@ -44,8 +43,7 @@ public class VMSimulator {
 
         @Override
         public void run() {
-            System.out.println("{" + new Date().toString() + "}[EVENT] - VM is ready to shutdown.");
-            ResearchEventPublisher.OnVMSessionAboutToExpire(id);
+            listener.OnVMBillingPeriodEnding(id);
         }
     }
 }

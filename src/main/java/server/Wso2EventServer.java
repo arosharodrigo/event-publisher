@@ -112,20 +112,20 @@ public class Wso2EventServer implements Runnable {
 
         for (StreamDefinition streamDefinition : loadStreamDefinitions()) {
             streamDefinitionStore.saveStreamDefinitionToStore(streamDefinition, -1234);
-            log.info("StreamDefinition of '" + streamDefinition.getStreamId() + "' added to store");
+            log.debug("StreamDefinition of '" + streamDefinition.getStreamId() + "' added to store");
         }
 
         databridge.subscribe(new AgentCallback() {
             public void definedStream(StreamDefinition streamDefinition, int tenantId) {
-                log.info("Added StreamDefinition " + streamDefinition);
+                log.debug("Added StreamDefinition " + streamDefinition);
             }
 
             public void removeStream(StreamDefinition streamDefinition, int tenantId) {
-                log.info("Removed StreamDefinition " + streamDefinition);
+                log.debug("Removed StreamDefinition " + streamDefinition);
             }
 
             public void receive(List<Event> eventList, Credentials credentials) {
-//                log.info("eventListSize=" + eventList.size() + " eventList " + eventList + " for username "
+//                log.debug("eventListSize=" + eventList.size() + " eventList " + eventList + " for username "
 //                        + credentials.getUsername());
                 eventReceived = true;
                 msgCount.addAndGet(eventList.size());
@@ -151,7 +151,7 @@ public class Wso2EventServer implements Runnable {
                         double avgLatency = ((double) totalLatancy) / elapseCount + 0.0;
                         double throughput = (((double) elapseCount) / (currentTimestamp - tempstartTime + 0.0)) * 1000;
 
-                        log.info("Sent " + elapseCount + " events with a throughput of " + throughput +
+                        log.debug("Sent " + elapseCount + " events with a throughput of " + throughput +
                                  " events per second || and latency: " + avgLatency);
                         tempstartTime = currentTimestamp;
                         totalLatancy = 0;
