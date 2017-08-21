@@ -21,7 +21,7 @@ public class StatisticsInputReaderTask extends TimerTask {
 
     public void readCurrentValuesFromFile() {
         try {
-            BufferedReader input = new BufferedReader(new FileReader("/home/sajith/research/statistics-collector/results.csv"));
+            BufferedReader input = new BufferedReader(new FileReader("/home/arosha/projects/Siddhi/projects/start-2017-06-19/Homomorphic/projects/my-git/statistics-collector/results.csv"));
             String lastLine = null;
             String currentLine;
 

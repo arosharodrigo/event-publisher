@@ -35,7 +35,7 @@ import java.util.Map;
 public class DataPublisherUtil {
 
     private static Log log = LogFactory.getLog(DataPublisherUtil.class);
-    public static String filePath = "/home/sajith/research/EventPublisher/";
+    public static String filePath = "/home/arosha/projects/Siddhi/projects/start-2017-06-19/Homomorphic/projects/my-git/event-publisher/";
     static File securityFile = new File(filePath + "src/main/java/files/configs");
 
     public static void setTrustStoreParams() {
