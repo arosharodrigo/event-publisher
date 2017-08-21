@@ -23,15 +23,14 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.databridge.agent.AgentHolder;
 import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.databridge.commons.Event;
-import publisher.email.EmailBenchmarkPublisher;
+import org.wso2.siddhi.extension.he.api.HomomorphicEncDecService;
+import publisher.filter.FilterBenchmarkPublisher;
 import publisher.schedular.PublicCloudDataPublishManager;
-import publisher.schedular.util.Compressor;
 import publisher.schedular.util.Configurations;
 import publisher.schedular.util.DataPublisherUtil;
 import publisher.schedular.vm.VMConfig;
 import publisher.schedular.vm.VMManager;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,14 +63,17 @@ public class ResearchEventPublisher{
     private static int maxEventPercentageToBeSentToPublicCloud = 15;
 
     private static int publicCloudPublishingRatioPerVm = 3; // Tells how much events to be published to public cloud for every 1000 events;
-    private static boolean isSwitching = false;
+    private static boolean isSwitching = true;
     private static int publishingRate = 6000;
     private static int publicCloudPublishBatchSize = 1000;
 
-
+    private static FilterBenchmarkPublisher publisher;
+    private static HomomorphicEncDecService homomorphicEncDecService;
 
     public static void main(String[] args) throws InterruptedException {
 
+        homomorphicEncDecService = new HomomorphicEncDecService();
+        homomorphicEncDecService.init();
 
         // To avoid exception xml parsing error occur for java 8
         System.setProperty("org.xml.sax.driver", "com.sun.org.apache.xerces.internal.parsers.SAXParser");
@@ -88,7 +90,8 @@ public class ResearchEventPublisher{
             DataPublisherUtil.setTrustStoreParams();
             DataPublisherUtil.loadStreamDefinitions();
 
-            privateDataPublisher = new DataPublisher(PROTOCOL,  "tcp://localhost:7611" , null, USER_NAME, PASSWORD);
+            privateDataPublisher = new DataPublisher(PROTOCOL,  "tcp://192.248.8.134:7611" , null, USER_NAME, PASSWORD);
+//            privateDataPublisher = new DataPublisher(PROTOCOL,  "tcp://127.0.0.1:7611" , null, USER_NAME, PASSWORD);
             currentDataPublisher = privateDataPublisher;
 
 
@@ -97,8 +100,9 @@ public class ResearchEventPublisher{
                 vmManager.start();
             }
 
-            Publishable emailProcessorPublisher = new EmailBenchmarkPublisher();
-            emailProcessorPublisher.startPublishing();
+
+            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
+            publisher.startPublishing();
 
             //Publishable debs2016Query1Publisher = new Debs2016Query1Publisher();
             //debs2016Query1Publisher.startPublishing();
@@ -113,7 +117,7 @@ public class ResearchEventPublisher{
     private static void initVmManager(){
         List<VMConfig> vmConfigList = new ArrayList<>();
 
-        vmConfigList.add(new VMConfig(1, 7611, "192.168.57.79", 10 * 1000,  12 * 1000, 10 * 1000));
+        vmConfigList.add(new VMConfig(1, 7611, "192.248.8.134", 5 * 1000,  10 * 1000, 1000));
         //vmConfigList.add(new VMConfig(2, 7611, "192.168.57.81", 20 * 1000,  22 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(3, 7611, "192.168.57.82", 30 * 1000,  32 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(4, 7611, "192.168.57.85", 40 * 1000,  42 * 1000, 10 * 1000));
@@ -124,16 +128,36 @@ public class ResearchEventPublisher{
 
     public static Object[] compress(Object[] eventPayload){
         // For email processor
-        try {
+        /*try {
             eventPayload[2] = Compressor.compress(eventPayload[2].toString());
             eventPayload[3] = Compressor.compress(eventPayload[3].toString());
             eventPayload[4] = Compressor.compress(eventPayload[4].toString());
             eventPayload[6] = Compressor.compress(eventPayload[6].toString());
         } catch (IOException e) {
             e.printStackTrace();
+        }*/
+        return eventPayload;
+    }
+
+    public static Object[] encrypt(Object[] eventPayload){
+        try {
+            long value = (Long)eventPayload[1];
+            byte[] byteArray = homomorphicEncDecService.encrypt(Long.toBinaryString(Long.MIN_VALUE | value).substring(32));
+//            String encryptedValue = "";
+//            try {
+//                encryptedValue = new String(byteArray, "UTF-8");
+//            } catch (UnsupportedEncodingException e) {
+//                System.out.println("Error1 - " + e);
+//            }
+//            String encryptedValue = homomorphicEncDecService.decrypt(Long.toBinaryString(Long.MIN_VALUE | value).substring(32));
+            eventPayload[1] = byteArray;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error2 - " + e);
         }
         return eventPayload;
     }
+
     public static  void publishEvent(Object[] eventPayload, String streamId) throws InterruptedException {
 
         if (sendToPublicCloud && (currentDataPublisher == privateDataPublisher)){
@@ -145,8 +169,13 @@ public class ResearchEventPublisher{
         if (currentDataPublisher != privateDataPublisher){
             publicSent++;
             totalSentToPublicCloud++;
-            eventPayload = compress(eventPayload);
+//            eventPayload = compress(eventPayload);
+            eventPayload = encrypt(eventPayload);
+            streamId = publisher.getStreamId(true);
         }
+
+        eventPayload = encrypt(eventPayload);
+        streamId = publisher.getStreamId(true);
 
         Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
 
