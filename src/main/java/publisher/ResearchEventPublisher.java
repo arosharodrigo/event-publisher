@@ -18,6 +18,7 @@
 
 package publisher;
 
+import org.apache.axiom.om.util.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.databridge.agent.AgentHolder;
@@ -31,8 +32,11 @@ import publisher.schedular.util.DataPublisherUtil;
 import publisher.schedular.vm.VMConfig;
 import publisher.schedular.vm.VMManager;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 //mvn exec:java -Dexec.mainClass="publisher.ResearchEventPublisher"
 public class ResearchEventPublisher{
@@ -140,23 +144,47 @@ public class ResearchEventPublisher{
     }
 
     public static Object[] encrypt(Object[] eventPayload){
+        Object[] modifiedPayload = new Object[21];
         try {
+            modifiedPayload[0] = eventPayload[0];
+
             long value = (Long)eventPayload[1];
             byte[] byteArray = homomorphicEncDecService.encrypt(Long.toBinaryString(Long.MIN_VALUE | value).substring(32));
-//            String encryptedValue = "";
-//            try {
-//                encryptedValue = new String(byteArray, "UTF-8");
-//            } catch (UnsupportedEncodingException e) {
-//                System.out.println("Error1 - " + e);
-//            }
-//            String encryptedValue = homomorphicEncDecService.decrypt(Long.toBinaryString(Long.MIN_VALUE | value).substring(32));
-            eventPayload[1] = byteArray;
+
+            int partLength = 30000;
+            int totalLength = byteArray.length;
+            int accumulatedLength = 0;
+            int i;
+            for(i=1; accumulatedLength < totalLength; i++) {
+                byte[] part = new byte[partLength];
+                if((accumulatedLength + partLength) <= totalLength) {
+                    System.arraycopy(byteArray, accumulatedLength, part, 0, part.length);
+                } else {
+                    System.arraycopy(byteArray, accumulatedLength, part, 0, (totalLength-accumulatedLength));
+                }
+                String encryptedValue = Base64.encode(part);
+                modifiedPayload[i] = encryptedValue;
+                accumulatedLength += partLength;
+            }
+            for (; i < modifiedPayload.length; i++) {
+                modifiedPayload[i] = "";
+            }
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error2 - " + e);
         }
-        return eventPayload;
+        return modifiedPayload;
     }
+
+    /*public static byte[] compress(String data) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(data.length());
+        GZIPOutputStream gzip = new GZIPOutputStream(bos);
+        gzip.write(data.getBytes());
+        gzip.close();
+        byte[] compressed = bos.toByteArray();
+        bos.close();
+        return compressed;
+    }*/
 
     public static  void publishEvent(Object[] eventPayload, String streamId) throws InterruptedException {
 
