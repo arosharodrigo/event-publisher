@@ -4,6 +4,9 @@ import publisher.Publishable;
 import publisher.ResearchEventPublisher;
 
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by arosha on 7/24/17.
@@ -23,8 +26,22 @@ public class FilterBenchmarkPublisher extends Publishable implements Runnable {
 
     @Override
     public void startPublishing() {
-        Thread publisherThread = new Thread(this);
-        publisherThread.start();
+//        Thread publisherThread = new Thread(this);
+//        publisherThread.start();
+//        final Random rand = new Random();
+        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Object[] dataItem = new Object[]{System.currentTimeMillis(), 22L};
+                    publish(dataItem);
+                } catch (Throwable t) {
+                    System.out.println("Error 6 - " + t);
+                    t.printStackTrace();
+                }
+            }
+        }, 5000, 1000, TimeUnit.MILLISECONDS);
     }
 
     @Override
