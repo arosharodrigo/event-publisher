@@ -26,9 +26,6 @@ public class FilterBenchmarkPublisher extends Publishable implements Runnable {
 
     @Override
     public void startPublishing() {
-//        Thread publisherThread = new Thread(this);
-//        publisherThread.start();
-//        final Random rand = new Random();
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -41,7 +38,7 @@ public class FilterBenchmarkPublisher extends Publishable implements Runnable {
                     t.printStackTrace();
                 }
             }
-        }, 5000, 1000, TimeUnit.MILLISECONDS);
+        }, 5000, 20, TimeUnit.MILLISECONDS);
     }
 
     @Override
