@@ -7,10 +7,14 @@ import org.wso2.carbon.databridge.agent.exception.DataEndpointException;
 import publisher.DataPublishDecisionTaker;
 import publisher.ResearchEventPublisher;
 import publisher.schedular.util.Configurations;
+import publisher.schedular.util.StatisticsInputReaderTask;
 import publisher.schedular.vm.VMConfig;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -22,6 +26,28 @@ public class PublicCloudDataPublishManager implements DataPublishDecisionListene
     Map<Integer, DataPublishDecisionTaker> dataPublishDecisionTakers = new HashMap<>();
     Map<Integer, VMConfig> vmIdToConfigurations = new HashMap<>();
     private static Map<Integer, DataPublisher> vmIdToDataPublisher = new ConcurrentHashMap<>();
+
+    private static Properties prop;
+
+    static {
+        prop = new Properties();
+        InputStream input = null;
+        try {
+            String filename = "config.properties";
+            input = StatisticsInputReaderTask.class.getClassLoader().getResourceAsStream(filename);
+            prop.load(input);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally{
+            if(input!=null){
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 
     /**
      * Method for the main class to register a VM with the data publish manager. Once registered a VM the manager will
@@ -89,7 +115,7 @@ public class PublicCloudDataPublishManager implements DataPublishDecisionListene
         try {
             DataPublisher dataPublisher = vmIdToDataPublisher.get(vmId);
             if (dataPublisher == null) {
-                dataPublisher = new DataPublisher(ResearchEventPublisher.PROTOCOL,
+                dataPublisher = new DataPublisher(prop.getProperty("protocol"),
                         vmConfig.getThriftUrl(), null, ResearchEventPublisher.USER_NAME, ResearchEventPublisher.PASSWORD);
                 vmIdToDataPublisher.put(vmConfig.getVmId(), dataPublisher);
             }

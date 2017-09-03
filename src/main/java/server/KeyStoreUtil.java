@@ -20,7 +20,7 @@ import java.io.File;
 
 public class KeyStoreUtil {
 
-    static File filePath = new File("src/main/java/files/configs");
+    static File filePath = new File("conf/files/configs");
 
     public static void setTrustStoreParams() {
         String trustStore = filePath.getAbsolutePath();

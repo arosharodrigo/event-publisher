@@ -29,21 +29,21 @@ import publisher.filter.FilterBenchmarkPublisher;
 import publisher.schedular.PublicCloudDataPublishManager;
 import publisher.schedular.util.Configurations;
 import publisher.schedular.util.DataPublisherUtil;
+import publisher.schedular.util.StatisticsInputReaderTask;
 import publisher.schedular.vm.VMConfig;
 import publisher.schedular.vm.VMManager;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.GZIPOutputStream;
+import java.util.Properties;
 
 //mvn exec:java -Dexec.mainClass="publisher.ResearchEventPublisher"
 public class ResearchEventPublisher{
     public static final int EMAIL_PROCESSOR_ID = 1;
     public static final int DEBS_Q1_ID = 2;
 
-    public static final String PROTOCOL = "thrift";
     public static final String USER_NAME = "admin";
     public static final String PASSWORD = "admin";
 
@@ -74,6 +74,28 @@ public class ResearchEventPublisher{
     private static FilterBenchmarkPublisher publisher;
     private static HomomorphicEncDecService homomorphicEncDecService;
 
+    private static Properties prop;
+
+    static {
+        prop = new Properties();
+        InputStream input = null;
+        try {
+            String filename = "config.properties";
+            input = StatisticsInputReaderTask.class.getClassLoader().getResourceAsStream(filename);
+            prop.load(input);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally{
+            if(input!=null){
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     public static void main(String[] args) throws InterruptedException {
 
         homomorphicEncDecService = new HomomorphicEncDecService();
@@ -90,12 +112,11 @@ public class ResearchEventPublisher{
             Configurations.setMinEventsToKeepVm(100000);
 
             log.debug("Starting WSO2 Event ResearchEventPublisher Stream Client");
-            AgentHolder.setConfigPath(DataPublisherUtil.filePath + "/src/main/java/files/configs/data-agent-config.xml");
+            AgentHolder.setConfigPath("conf/files/configs/data-agent-config.xml");
             DataPublisherUtil.setTrustStoreParams();
             DataPublisherUtil.loadStreamDefinitions();
 
-            privateDataPublisher = new DataPublisher(PROTOCOL,  "tcp://192.248.8.134:7611" , null, USER_NAME, PASSWORD);
-//            privateDataPublisher = new DataPublisher(PROTOCOL,  "tcp://127.0.0.1:7611" , null, USER_NAME, PASSWORD);
+            privateDataPublisher = new DataPublisher(prop.getProperty("protocol"),  prop.getProperty("private.das.receiver.url") , null, USER_NAME, PASSWORD);
             currentDataPublisher = privateDataPublisher;
 
 
@@ -121,7 +142,8 @@ public class ResearchEventPublisher{
     private static void initVmManager(){
         List<VMConfig> vmConfigList = new ArrayList<>();
 
-        vmConfigList.add(new VMConfig(1, 7611, "192.248.8.134", 5 * 1000,  10 * 1000, 1000));
+//        vmConfigList.add(new VMConfig(1, Integer.valueOf(prop.getProperty("public.das.vm1.port")), prop.getProperty("public.das.vm1.ip"), 5 * 1000,  10 * 1000, 1000));
+//        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.135", 5 * 1000,  10 * 1000, 1000));
         //vmConfigList.add(new VMConfig(2, 7611, "192.168.57.81", 20 * 1000,  22 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(3, 7611, "192.168.57.82", 30 * 1000,  32 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(4, 7611, "192.168.57.85", 40 * 1000,  42 * 1000, 10 * 1000));
@@ -163,6 +185,7 @@ public class ResearchEventPublisher{
                     System.arraycopy(byteArray, accumulatedLength, part, 0, (totalLength-accumulatedLength));
                 }
                 String encryptedValue = Base64.encode(part);
+//                String encryptedValue = new String(part, "UTF-8");
                 modifiedPayload[i] = encryptedValue;
                 accumulatedLength += partLength;
             }
@@ -186,7 +209,7 @@ public class ResearchEventPublisher{
         return compressed;
     }*/
 
-    public static  void publishEvent(Object[] eventPayload, String streamId) throws InterruptedException {
+    public static void publishEvent(Object[] eventPayload, String streamId) throws InterruptedException {
 
         if (sendToPublicCloud && (currentDataPublisher == privateDataPublisher)){
             if (count % (100 - eventPercentageToBeSentToPublicCloud) == 0){
@@ -194,16 +217,18 @@ public class ResearchEventPublisher{
             }
         }
 
-        if (currentDataPublisher != privateDataPublisher){
-            publicSent++;
-            totalSentToPublicCloud++;
-//            eventPayload = compress(eventPayload);
+        if (currentDataPublisher == privateDataPublisher){
             eventPayload = encrypt(eventPayload);
             streamId = publisher.getStreamId(true);
         }
 
-        eventPayload = encrypt(eventPayload);
-        streamId = publisher.getStreamId(true);
+        if (currentDataPublisher != privateDataPublisher){
+            publicSent++;
+            totalSentToPublicCloud++;
+//            eventPayload = compress(eventPayload);
+//            eventPayload = encrypt(eventPayload);
+//            streamId = publisher.getStreamId(true);
+        }
 
         Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
 

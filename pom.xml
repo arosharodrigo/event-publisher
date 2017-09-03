@@ -8,6 +8,20 @@
     <artifactId>sample</artifactId>
     <version>1.0-SNAPSHOT</version>
     <build>
+        <finalName>event-publisher-1.0</finalName>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -21,31 +35,141 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>appassembler-maven-plugin</artifactId>
                 <version>1.10</version>
+                <configuration>
+                    <generateRepository>true</generateRepository>
+                    <!--<repoPath>lib</repoPath>-->
+                    <repositoryLayout>flat</repositoryLayout>
+                    <includeConfigurationDirectoryInClasspath>true</includeConfigurationDirectoryInClasspath>
+                    <!--<assembleDirectory>${project.build.directory}/jsw/babel</assembleDirectory>-->
+                    <showConsoleWindow>true</showConsoleWindow>
+                    <configurationDirectory>conf</configurationDirectory>
+                    <defaultJvmSettings>
+                        <initialMemorySize>3072M</initialMemorySize>
+                        <maxMemorySize>3072M</maxMemorySize>
+                    </defaultJvmSettings>
+                    <daemons>
+                        <daemon>
+                            <id>${project.build.finalName}</id>
+                            <mainClass>publisher.ResearchEventPublisher</mainClass>
+                            <platforms>
+                                <platform>jsw</platform>
+                            </platforms>
+                            <jvmSettings>
+                                <systemProperties>
+                                    <systemProperty>
+                                        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+                                    </systemProperty>
+                                    <systemProperty>
+                                        -agentpath:Y:\JPROFI~1\JPROFI~1\bin\WINDOW~1\jprofilerti.dll=port=8849,nowait
+                                    </systemProperty>
+                                    <systemProperty>
+                                        -agentpath:/home/smh/installs/profiler/linux-x86/libjprofilerti.so=port=8080,nowait
+                                    </systemProperty>
+                                </systemProperties>
+                            </jvmSettings>
+                            <generatorConfigurations>
+                                <generatorConfiguration>
+                                    <generator>jsw</generator>
+                                    <configuration>
+                                        <property>
+                                            <name>configuration.directory.in.classpath.first</name>
+                                            <value>conf</value>
+                                        </property>
+                                        <property>
+                                            <name>set.default.REPO_DIR</name>
+                                            <value>lib</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.console.loglevel</name>
+                                            <value>INFO</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.logfile.loglevel</name>
+                                            <value>INFO</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.logfile</name>
+                                            <value>./logs/wrapper.log</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.java.mainclass</name>
+                                            <value>publisher.ResearchEventPublisher</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.startup.timeout</name>
+                                            <value>600</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.java.initmemory</name>
+                                            <value>3072</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.java.maxmemory</name>
+                                            <value>3072</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.java.additional.1</name>
+                                            <value>-Xloggc:logs/gclog</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.java.additional.2</name>
+                                            <value>-XX:+UseG1GC</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.java.additional.3</name>
+                                            <value>-XX:MaxGCPauseMillis=200</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.java.additional.4</name>
+                                            <value>-XX:ParallelGCThreads=5</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.java.additional.5</name>
+                                            <value>-XX:ConcGCThreads=4</value>
+                                        </property>
+                                        <property>
+                                            <name>wrapper.java.additional.6</name>
+                                            <value>-XX:InitiatingHeapOccupancyPercent=70</value>
+                                        </property>
+                                    </configuration>
+                                    <includes>
+                                        <include>linux-x86-32</include>
+                                        <include>windows-x86-32</include>
+                                        <include>linux-x86-64</include>
+                                        <include>windows-x86-64</include>
+                                    </includes>
+                                </generatorConfiguration>
+                            </generatorConfigurations>
+                        </daemon>
+                    </daemons>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>generate-jsw-scripts</id>
-                        <phase>package</phase>
                         <goals>
                             <goal>generate-daemons</goal>
+                            <goal>create-repository</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>createThriftDir</id>
+                        <phase>process-resources</phase>
                         <configuration>
-                            <repositoryLayout>flat</repositoryLayout>
-                            <!--<includeConfigurationDirectoryInClasspath>true</includeConfigurationDirectoryInClasspath>-->
-                            <daemons>
-                                <daemon>
-                                    <id>app1</id>
-                                    <!-- the next line is added by default if you don't have wrapperMainClass's setting -->
-                                    <wrapperMainClass>org.tanukisoftware.wrapper.WrapperSimpleApp</wrapperMainClass>
-                                    <mainClass>publisher.ResearchEventPublisher</mainClass>
-                                    <commandLineArguments>
-                                        <commandLineArgument>start</commandLineArgument>
-                                    </commandLineArguments>
-                                    <platforms>
-                                        <platform>jsw</platform>
-                                    </platforms>
-                                </daemon>
-                            </daemons>
+                            <tasks>
+                                <mkdir dir="target/generated-resources/appassembler/jsw/event-publisher-1.0/logs" />
+                                <copy toDir="target/generated-resources/appassembler/jsw/event-publisher-1.0/conf">
+                                    <fileset dir="${project.basedir}/src/main/resources" />
+                                </copy>
+                            </tasks>
                         </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

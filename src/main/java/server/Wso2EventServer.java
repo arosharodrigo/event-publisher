@@ -107,7 +107,7 @@ public class Wso2EventServer implements Runnable {
 
             }
 
-        }, streamDefinitionStore, "src/main/java/files/configs/" + "data-bridge-config.xml");
+        }, streamDefinitionStore, "conf/files/configs/" + "data-bridge-config.xml");
         thriftDataReceiver = new ThriftDataReceiver(receiverPort, databridge);
 
         for (StreamDefinition streamDefinition : loadStreamDefinitions()) {
@@ -191,7 +191,7 @@ public class Wso2EventServer implements Runnable {
     }
 
     public List<StreamDefinition> loadStreamDefinitions() {
-        String relativeFilePath = "src/main/java/files/streamDefinitions/";
+        String relativeFilePath = "conf/files/streamDefinitions/";
         String directoryPath = relativeFilePath.replaceAll("[\\\\/]", Matcher.quoteReplacement(File.separator));
         String FILE_STREAM_DEFINITION_EXT = ".json";
         GenericExtFilter filter = new GenericExtFilter(FILE_STREAM_DEFINITION_EXT);
@@ -241,7 +241,7 @@ public class Wso2EventServer implements Runnable {
     }
 
     public String getResourceFilePath(String testCaseFolderName, String resourceFileName) {
-        String relativeFilePath = "../files/configs/" + resourceFileName;
+        String relativeFilePath = "conf/files/configs/" + resourceFileName;
         return relativeFilePath.replaceAll("[\\\\/]", Matcher.quoteReplacement(File.separator));
     }
 

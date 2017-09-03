@@ -35,8 +35,7 @@ import java.util.Map;
 public class DataPublisherUtil {
 
     private static Log log = LogFactory.getLog(DataPublisherUtil.class);
-    public static String filePath = "/home/arosha/projects/Siddhi/projects/start-2017-06-19/Homomorphic/projects/my-git/event-publisher/";
-    static File securityFile = new File(filePath + "src/main/java/files/configs");
+    static File securityFile = new File("conf/files/configs");
 
     public static void setTrustStoreParams() {
         String trustStore = securityFile.getAbsolutePath();
@@ -45,7 +44,7 @@ public class DataPublisherUtil {
     }
 
     public static Map<String, StreamDefinition> loadStreamDefinitions() {
-        String directoryPath = filePath + "/src/main/java/files/streamDefinitions";
+        String directoryPath = "conf/files/streamDefinitions";
 
         File directory = new File(directoryPath);
         Map<String, StreamDefinition> streamDefinitions = new HashMap<String, StreamDefinition>();
