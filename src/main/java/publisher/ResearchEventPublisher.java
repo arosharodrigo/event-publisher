@@ -21,6 +21,8 @@ package publisher;
 import org.apache.axiom.om.util.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.tanukisoftware.wrapper.WrapperListener;
+import org.tanukisoftware.wrapper.WrapperManager;
 import org.wso2.carbon.databridge.agent.AgentHolder;
 import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.databridge.commons.Event;
@@ -40,7 +42,7 @@ import java.util.List;
 import java.util.Properties;
 
 //mvn exec:java -Dexec.mainClass="publisher.ResearchEventPublisher"
-public class ResearchEventPublisher{
+public class ResearchEventPublisher implements WrapperListener {
     public static final int EMAIL_PROCESSOR_ID = 1;
     public static final int DEBS_Q1_ID = 2;
 
@@ -97,46 +99,7 @@ public class ResearchEventPublisher{
     }
 
     public static void main(String[] args) throws InterruptedException {
-
-        homomorphicEncDecService = new HomomorphicEncDecService();
-        homomorphicEncDecService.init();
-
-        // To avoid exception xml parsing error occur for java 8
-        System.setProperty("org.xml.sax.driver", "com.sun.org.apache.xerces.internal.parsers.SAXParser");
-        System.setProperty("javax.xml.parsers.DocumentBuilderFactory","com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
-        System.setProperty("javax.xml.parsers.SAXParserFactory","com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl");
-
-        try {
-            Configurations.setVmStartDelay(10 * 1000);
-            Configurations.setVmBillingSessionDuration(60*1000);
-            Configurations.setMinEventsToKeepVm(100000);
-
-            log.debug("Starting WSO2 Event ResearchEventPublisher Stream Client");
-            AgentHolder.setConfigPath("conf/files/configs/data-agent-config.xml");
-            DataPublisherUtil.setTrustStoreParams();
-            DataPublisherUtil.loadStreamDefinitions();
-
-            privateDataPublisher = new DataPublisher(prop.getProperty("protocol"),  prop.getProperty("private.das.receiver.url") , null, USER_NAME, PASSWORD);
-            currentDataPublisher = privateDataPublisher;
-
-
-            if (isSwitching) {
-                initVmManager();
-                vmManager.start();
-            }
-
-
-            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
-            publisher.startPublishing();
-
-            //Publishable debs2016Query1Publisher = new Debs2016Query1Publisher();
-            //debs2016Query1Publisher.startPublishing();
-            //Publishable debs2016Query2Publisher = new Debs2016Query2Publisher();
-            //debs2016Query2Publisher.startPublishing();
-        } catch (Throwable e) {
-
-            log.error(e);
-        }
+        WrapperManager.start(new ResearchEventPublisher(), args);
     }
 
     private static void initVmManager(){
@@ -330,5 +293,65 @@ public class ResearchEventPublisher{
         if (count % 12000 == 0) {
             Thread.sleep(1000);
         }
+    }
+
+    @Override
+    public Integer start(String[] strings) {
+        System.out.println("=================================================================================");
+        System.out.println("==========================Starting Event Publisher===============================");
+        System.out.println("=================================================================================");
+
+        homomorphicEncDecService = new HomomorphicEncDecService();
+        homomorphicEncDecService.init();
+
+        // To avoid exception xml parsing error occur for java 8
+        System.setProperty("org.xml.sax.driver", "com.sun.org.apache.xerces.internal.parsers.SAXParser");
+        System.setProperty("javax.xml.parsers.DocumentBuilderFactory","com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+        System.setProperty("javax.xml.parsers.SAXParserFactory","com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl");
+
+        try {
+            Configurations.setVmStartDelay(10 * 1000);
+            Configurations.setVmBillingSessionDuration(60*1000);
+            Configurations.setMinEventsToKeepVm(100000);
+
+            log.debug("Starting WSO2 Event ResearchEventPublisher Stream Client");
+            AgentHolder.setConfigPath("conf/files/configs/data-agent-config.xml");
+            DataPublisherUtil.setTrustStoreParams();
+            DataPublisherUtil.loadStreamDefinitions();
+
+            privateDataPublisher = new DataPublisher(prop.getProperty("protocol"),  prop.getProperty("private.das.receiver.url") , null, USER_NAME, PASSWORD);
+            currentDataPublisher = privateDataPublisher;
+
+
+            if (isSwitching) {
+                initVmManager();
+                vmManager.start();
+            }
+
+
+            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
+            publisher.startPublishing();
+
+            //Publishable debs2016Query1Publisher = new Debs2016Query1Publisher();
+            //debs2016Query1Publisher.startPublishing();
+            //Publishable debs2016Query2Publisher = new Debs2016Query2Publisher();
+            //debs2016Query2Publisher.startPublishing();
+        } catch (Throwable e) {
+            log.error(e);
+        }
+        return null;
+    }
+
+    @Override
+    public int stop(int i) {
+        System.out.println("=================================================================================");
+        System.out.println("==========================Stopping Event Publisher===============================");
+        System.out.println("=================================================================================");
+        return 0;
+    }
+
+    @Override
+    public void controlEvent(int i) {
+
     }
 }
