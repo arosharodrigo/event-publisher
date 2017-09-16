@@ -18,7 +18,6 @@
 
 package publisher;
 
-import org.apache.axiom.om.util.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.tanukisoftware.wrapper.WrapperListener;
@@ -129,32 +128,13 @@ public class ResearchEventPublisher implements WrapperListener {
     }
 
     public static Object[] encrypt(Object[] eventPayload){
-        Object[] modifiedPayload = new Object[21];
+        Object[] modifiedPayload = new Object[2];
         try {
             modifiedPayload[0] = eventPayload[0];
 
             long value = (Long)eventPayload[1];
-            byte[] byteArray = homomorphicEncDecService.encrypt(Long.toBinaryString(Long.MIN_VALUE | value).substring(32));
-
-            int partLength = 30000;
-            int totalLength = byteArray.length;
-            int accumulatedLength = 0;
-            int i;
-            for(i=1; accumulatedLength < totalLength; i++) {
-                byte[] part = new byte[partLength];
-                if((accumulatedLength + partLength) <= totalLength) {
-                    System.arraycopy(byteArray, accumulatedLength, part, 0, part.length);
-                } else {
-                    System.arraycopy(byteArray, accumulatedLength, part, 0, (totalLength-accumulatedLength));
-                }
-                String encryptedValue = Base64.encode(part);
-//                String encryptedValue = new String(part, "UTF-8");
-                modifiedPayload[i] = encryptedValue;
-                accumulatedLength += partLength;
-            }
-            for (; i < modifiedPayload.length; i++) {
-                modifiedPayload[i] = "";
-            }
+            String encryptLong = homomorphicEncDecService.encryptLong(value);
+            modifiedPayload[1] = encryptLong;
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error2 - " + e);
@@ -302,7 +282,7 @@ public class ResearchEventPublisher implements WrapperListener {
         System.out.println("=================================================================================");
 
         homomorphicEncDecService = new HomomorphicEncDecService();
-        homomorphicEncDecService.init();
+        homomorphicEncDecService.init(prop.getProperty("key.file.path"));
 
         // To avoid exception xml parsing error occur for java 8
         System.setProperty("org.xml.sax.driver", "com.sun.org.apache.xerces.internal.parsers.SAXParser");
