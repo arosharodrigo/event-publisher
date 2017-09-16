@@ -101,11 +101,11 @@
                                         </property>
                                         <property>
                                             <name>wrapper.java.initmemory</name>
-                                            <value>3072</value>
+                                            <value>1024</value>
                                         </property>
                                         <property>
                                             <name>wrapper.java.maxmemory</name>
-                                            <value>3072</value>
+                                            <value>1024</value>
                                         </property>
                                         <property>
                                             <name>wrapper.java.additional.1</name>
