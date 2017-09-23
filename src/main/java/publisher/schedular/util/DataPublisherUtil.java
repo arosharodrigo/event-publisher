@@ -36,11 +36,23 @@ public class DataPublisherUtil {
 
     private static Log log = LogFactory.getLog(DataPublisherUtil.class);
     static File securityFile = new File("conf/files/configs");
+    static String pseudoCarbonHome = "conf" + "/files";
 
     public static void setTrustStoreParams() {
         String trustStore = securityFile.getAbsolutePath();
         System.setProperty("javax.net.ssl.trustStore", trustStore + "" + File.separator + "client-truststore.jks");
         System.setProperty("javax.net.ssl.trustStorePassword", "wso2carbon");
+    }
+
+    public static void setKeyStoreParams() {
+        String keyStore = securityFile.getAbsolutePath();
+        System.setProperty("Security.KeyStore.Location", keyStore + "" + File.separator + "wso2carbon.jks");
+        System.setProperty("Security.KeyStore.Password", "wso2carbon");
+    }
+
+    // This is to set CARBON_HOME for data bridge to initialize. Otherwise it will fail to receive events though the server is started
+    public static void setPseudoCarbonHome(){
+        System.setProperty("carbon.home", pseudoCarbonHome);
     }
 
     public static Map<String, StreamDefinition> loadStreamDefinitions() {

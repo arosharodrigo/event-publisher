@@ -305,6 +305,8 @@ public class ResearchEventPublisher implements WrapperListener {
             log.debug("Starting WSO2 Event ResearchEventPublisher Stream Client");
             AgentHolder.setConfigPath("conf/files/configs/data-agent-config.xml");
             DataPublisherUtil.setTrustStoreParams();
+            DataPublisherUtil.setKeyStoreParams();
+            DataPublisherUtil.setPseudoCarbonHome();
             DataPublisherUtil.loadStreamDefinitions();
 
             privateDataPublisher = new DataPublisher(prop.getProperty("protocol"),  prop.getProperty("private.das.receiver.url") , null, USER_NAME, PASSWORD);

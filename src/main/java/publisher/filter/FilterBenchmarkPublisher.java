@@ -31,8 +31,10 @@ public class FilterBenchmarkPublisher extends Publishable implements Runnable {
             @Override
             public void run() {
                 try {
-                    Object[] dataItem = new Object[]{System.currentTimeMillis(), 22L};
-                    publish(dataItem);
+                    for(int i = 0;i < 20;i++) {
+                        Object[] dataItem = new Object[]{System.currentTimeMillis(), 22L};
+                        publish(dataItem);
+                    }
                 } catch (Throwable t) {
                     System.out.println("Error 6 - " + t);
                     t.printStackTrace();
