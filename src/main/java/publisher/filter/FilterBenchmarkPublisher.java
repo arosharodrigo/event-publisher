@@ -38,7 +38,7 @@ public class FilterBenchmarkPublisher extends Publishable implements Runnable {
                     t.printStackTrace();
                 }
             }
-        }, 5000, 20, TimeUnit.MILLISECONDS);
+        }, 2000, 10, TimeUnit.MILLISECONDS);
     }
 
     @Override

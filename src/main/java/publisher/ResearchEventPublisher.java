@@ -26,6 +26,7 @@ import org.wso2.carbon.databridge.agent.AgentHolder;
 import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.databridge.commons.Event;
 import org.wso2.siddhi.extension.he.api.HomomorphicEncDecService;
+import publisher.filter.AsyncCompositeHeEventPublisher;
 import publisher.filter.FilterBenchmarkPublisher;
 import publisher.schedular.PublicCloudDataPublishManager;
 import publisher.schedular.util.Configurations;
@@ -72,10 +73,12 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int publishingRate = 6000;
     private static int publicCloudPublishBatchSize = 1000;
 
-    private static FilterBenchmarkPublisher publisher;
-    private static HomomorphicEncDecService homomorphicEncDecService;
+    public static FilterBenchmarkPublisher publisher;
+    public static HomomorphicEncDecService homomorphicEncDecService;
 
     private static Properties prop;
+
+    private static boolean isHeEventMode;
 
     static {
         prop = new Properties();
@@ -95,6 +98,8 @@ public class ResearchEventPublisher implements WrapperListener {
                 }
             }
         }
+        AsyncCompositeHeEventPublisher.init();
+        isHeEventMode = Boolean.parseBoolean(prop.getProperty("he.event.mode"));
     }
 
     public static void main(String[] args) throws InterruptedException {
@@ -161,8 +166,12 @@ public class ResearchEventPublisher implements WrapperListener {
         }
 
         if (currentDataPublisher == privateDataPublisher){
-            eventPayload = encrypt(eventPayload);
-            streamId = publisher.getStreamId(true);
+            if(isHeEventMode) {
+                AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
+            } else {
+                Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+                currentDataPublisher.publish(event);
+            }
         }
 
         if (currentDataPublisher != privateDataPublisher){
@@ -171,16 +180,10 @@ public class ResearchEventPublisher implements WrapperListener {
 //            eventPayload = compress(eventPayload);
 //            eventPayload = encrypt(eventPayload);
 //            streamId = publisher.getStreamId(true);
-        }
-
-        Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-
-        if (currentDataPublisher != privateDataPublisher){
+            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
             currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
             currentDataPublisher.tryPublish(event);
-        } else {
-            currentDataPublisher.publish(event);
-       }
+        }
 
         if (currentDataPublisher != privateDataPublisher){
             if (++currentPublicPublishCount == eventPercentageToBeSentToPublicCloud){
@@ -200,6 +203,11 @@ public class ResearchEventPublisher implements WrapperListener {
         if (count == 2500000){
             System.exit(0);
         }
+    }
+
+    public static void publishCompositeEvent(Object[] compositeEventPayload) {
+        Event event = new Event(publisher.getStreamId(true), System.currentTimeMillis(), null, null, compositeEventPayload);
+        currentDataPublisher.publish(event);
     }
 
     /**
