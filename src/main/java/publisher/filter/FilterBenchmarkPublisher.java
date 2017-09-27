@@ -31,7 +31,7 @@ public class FilterBenchmarkPublisher extends Publishable implements Runnable {
             @Override
             public void run() {
                 try {
-                    for(int i = 0;i < 20;i++) {
+                    for(int i = 0;i < 1;i++) {
                         Object[] dataItem = new Object[]{System.currentTimeMillis(), 22L};
                         publish(dataItem);
                     }
@@ -40,7 +40,7 @@ public class FilterBenchmarkPublisher extends Publishable implements Runnable {
                     t.printStackTrace();
                 }
             }
-        }, 2000, 10, TimeUnit.MILLISECONDS);
+        }, 2000, 1000, TimeUnit.MILLISECONDS);
     }
 
     @Override
