@@ -16,7 +16,7 @@ public class AsyncCompositeHeEventPublisher {
     public static void init() {
         queue = new ArrayBlockingQueue<>(100000);
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+        /*scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -51,7 +51,7 @@ public class AsyncCompositeHeEventPublisher {
                     t.printStackTrace();
                 }
             }
-        }, 10000, 50, TimeUnit.MILLISECONDS);
+        }, 10000, 50, TimeUnit.MILLISECONDS);*/
 
     }
 

@@ -246,11 +246,6 @@
             <version>1.7.4</version>
         </dependency>
         <dependency>
-            <groupId>CEPStormPerf</groupId>
-            <artifactId>CEPStormPerf</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
             <version>1.7.7</version>
@@ -259,11 +254,6 @@
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>2.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.siddhi</groupId>
-            <artifactId>siddhi-extension-homomorphic-encryption</artifactId>
-            <version>3.1.2</version>
         </dependency>
     </dependencies>
 

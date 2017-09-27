@@ -25,7 +25,7 @@ import org.tanukisoftware.wrapper.WrapperManager;
 import org.wso2.carbon.databridge.agent.AgentHolder;
 import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.databridge.commons.Event;
-import org.wso2.siddhi.extension.he.api.HomomorphicEncDecService;
+//import org.wso2.siddhi.extension.he.api.HomomorphicEncDecService;
 import publisher.filter.AsyncCompositeHeEventPublisher;
 import publisher.filter.FilterBenchmarkPublisher;
 import publisher.schedular.PublicCloudDataPublishManager;
@@ -74,7 +74,7 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int publicCloudPublishBatchSize = 1000;
 
     public static FilterBenchmarkPublisher publisher;
-    public static HomomorphicEncDecService homomorphicEncDecService;
+//    public static HomomorphicEncDecService homomorphicEncDecService;
 
     private static Properties prop;
 
@@ -138,8 +138,8 @@ public class ResearchEventPublisher implements WrapperListener {
             modifiedPayload[0] = eventPayload[0];
 
             long value = (Long)eventPayload[1];
-            String encryptLong = homomorphicEncDecService.encryptLong(value);
-            modifiedPayload[1] = encryptLong;
+//            String encryptLong = homomorphicEncDecService.encryptLong(value);
+//            modifiedPayload[1] = encryptLong;
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error2 - " + e);
@@ -289,8 +289,8 @@ public class ResearchEventPublisher implements WrapperListener {
         System.out.println("==========================Starting Event Publisher===============================");
         System.out.println("=================================================================================");
 
-        homomorphicEncDecService = new HomomorphicEncDecService();
-        homomorphicEncDecService.init(prop.getProperty("key.file.path"));
+//        homomorphicEncDecService = new HomomorphicEncDecService();
+//        homomorphicEncDecService.init(prop.getProperty("key.file.path"));
 
         // To avoid exception xml parsing error occur for java 8
         System.setProperty("org.xml.sax.driver", "com.sun.org.apache.xerces.internal.parsers.SAXParser");
