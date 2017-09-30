@@ -1,5 +1,7 @@
 package publisher.filter;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import publisher.ResearchEventPublisher;
 
 import java.util.ArrayList;
@@ -8,6 +10,8 @@ import java.util.Queue;
 import java.util.concurrent.*;
 
 public class AsyncCompositeHeEventPublisher {
+
+    private static Log log = LogFactory.getLog(AsyncCompositeHeEventPublisher.class);
 
     private static Queue<Object[]> queue;
     private static ScheduledExecutorService scheduledExecutorService;
@@ -28,23 +32,23 @@ public class AsyncCompositeHeEventPublisher {
                         eventList.add(event);
                     }
 
-                                StringBuilder timestampBuilder = new StringBuilder();
-                                StringBuilder valueBuilder = new StringBuilder();
-                                for (Object[] event : eventList) {
-                                    timestampBuilder.append(event[0]);
-                                    timestampBuilder.append(",");
-                                    valueBuilder.append(event[1]);
-                                    valueBuilder.append(",");
-                                }
-                                int dummyCount = batchSize - eventList.size();
-                                for (int i = 0; i < dummyCount; i++) {
-                                    valueBuilder.append(0);
-                                    valueBuilder.append(",");
-                                }
-                                String valueList = valueBuilder.toString().replaceAll(",$", "");
-                                String encryptedValueList = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(valueList);
-                                Object[] compositeEvent = {timestampBuilder.toString().replaceAll(",$", ""), encryptedValueList, String.valueOf(eventList.size())};
-                                ResearchEventPublisher.publishCompositeEvent(compositeEvent);
+                    StringBuilder timestampBuilder = new StringBuilder();
+                    StringBuilder valueBuilder = new StringBuilder();
+                    for (Object[] event : eventList) {
+                        timestampBuilder.append(event[0]);
+                        timestampBuilder.append(",");
+                        valueBuilder.append(event[1]);
+                        valueBuilder.append(",");
+                    }
+                    int dummyCount = batchSize - eventList.size();
+                    for (int i = 0; i < dummyCount; i++) {
+                        valueBuilder.append(0);
+                        valueBuilder.append(",");
+                    }
+                    String valueList = valueBuilder.toString().replaceAll(",$", "");
+                    String encryptedValueList = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(valueList);
+                    Object[] compositeEvent = {timestampBuilder.toString().replaceAll(",$", ""), encryptedValueList, String.valueOf(eventList.size())};
+                    ResearchEventPublisher.publishCompositeEvent(compositeEvent);
 
                 } catch (Throwable t) {
                     System.out.println("Error 7 - " + t);
