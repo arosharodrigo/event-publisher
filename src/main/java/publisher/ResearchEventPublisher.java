@@ -200,7 +200,7 @@ public class ResearchEventPublisher implements WrapperListener {
             log.info("Done Sending " + (float)count/1000000.0  + " M Events[TotalSentToPublicCloud=" + totalSentToPublicCloud + ", PublicCloudSendingRatio=" + eventPercentageToBeSentToPublicCloud + "]");
         }
 
-        if (count == 2500000){
+        if (count == 7500000){
             System.exit(0);
         }
     }

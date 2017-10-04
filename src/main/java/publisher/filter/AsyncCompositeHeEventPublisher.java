@@ -55,7 +55,7 @@ public class AsyncCompositeHeEventPublisher {
                     t.printStackTrace();
                 }
             }
-        }, 10000, 50, TimeUnit.MILLISECONDS);
+        }, 10000, 60, TimeUnit.MILLISECONDS);
 
     }
 
