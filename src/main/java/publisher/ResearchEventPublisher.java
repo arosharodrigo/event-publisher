@@ -110,7 +110,7 @@ public class ResearchEventPublisher implements WrapperListener {
         List<VMConfig> vmConfigList = new ArrayList<>();
 
 //        vmConfigList.add(new VMConfig(1, Integer.valueOf(prop.getProperty("public.das.vm1.port")), prop.getProperty("public.das.vm1.ip"), 5 * 1000,  10 * 1000, 1000));
-//        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.135", 5 * 1000,  10 * 1000, 1000));
+//        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.134", 10, 10, 10));
         //vmConfigList.add(new VMConfig(2, 7611, "192.168.57.81", 20 * 1000,  22 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(3, 7611, "192.168.57.82", 30 * 1000,  32 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(4, 7611, "192.168.57.85", 40 * 1000,  42 * 1000, 10 * 1000));
@@ -166,12 +166,12 @@ public class ResearchEventPublisher implements WrapperListener {
         }
 
         if (currentDataPublisher == privateDataPublisher){
-            if(isHeEventMode) {
-                AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
-            } else {
+//            if(isHeEventMode) {
+//                AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
+//            } else {
                 Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
                 currentDataPublisher.publish(event);
-            }
+//            }
         }
 
         if (currentDataPublisher != privateDataPublisher){
@@ -180,9 +180,10 @@ public class ResearchEventPublisher implements WrapperListener {
 //            eventPayload = compress(eventPayload);
 //            eventPayload = encrypt(eventPayload);
 //            streamId = publisher.getStreamId(true);
-            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-            currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
-            currentDataPublisher.tryPublish(event);
+//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+//            currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
+//            currentDataPublisher.tryPublish(event);
+            AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
         }
 
         if (currentDataPublisher != privateDataPublisher){
@@ -207,7 +208,8 @@ public class ResearchEventPublisher implements WrapperListener {
 
     public static void publishCompositeEvent(Object[] compositeEventPayload) {
         Event event = new Event(publisher.getStreamId(true), System.currentTimeMillis(), null, null, compositeEventPayload);
-        currentDataPublisher.publish(event);
+        DataPublisher dataPublisher = PublicCloudDataPublishManager.vmIdToDataPublisher.get(1);
+        dataPublisher.tryPublish(event);
     }
 
     /**

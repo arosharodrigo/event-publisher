@@ -25,37 +25,40 @@ public class AsyncCompositeHeEventPublisher {
             public void run() {
                 try {
                     int currentQueueSize = queue.size();
-                    int iterationCount = (currentQueueSize > batchSize) ? batchSize : currentQueueSize;
-                    final List<Object[]> eventList = new ArrayList<>();
-                    for(int i=0; i<iterationCount; i++) {
-                        Object[] event = queue.poll();
-                        eventList.add(event);
-                    }
+                    if(currentQueueSize > 0) {
+                        int iterationCount = (currentQueueSize > batchSize) ? batchSize : currentQueueSize;
+                        final List<Object[]> eventList = new ArrayList<>();
+                        for (int i = 0; i < iterationCount; i++) {
+                            Object[] event = queue.poll();
+                            eventList.add(event);
+                        }
 
-                    StringBuilder timestampBuilder = new StringBuilder();
-                    StringBuilder valueBuilder = new StringBuilder();
-                    for (Object[] event : eventList) {
-                        timestampBuilder.append(event[0]);
-                        timestampBuilder.append(",");
-                        valueBuilder.append(event[1]);
-                        valueBuilder.append(",");
+                        StringBuilder timestampBuilder = new StringBuilder();
+                        StringBuilder valueBuilder = new StringBuilder();
+                        for (Object[] event : eventList) {
+                            timestampBuilder.append(event[0]);
+                            timestampBuilder.append(",");
+                            valueBuilder.append(event[1]);
+                            valueBuilder.append(",");
+                        }
+                        int dummyCount = batchSize - eventList.size();
+                        for (int i = 0; i < dummyCount; i++) {
+                            valueBuilder.append(0);
+                            valueBuilder.append(",");
+                        }
+                        String valueList = valueBuilder.toString().replaceAll(",$", "");
+                        String encryptedValueList = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(valueList);
+                        Object[] compositeEvent = {timestampBuilder.toString().replaceAll(",$", ""), encryptedValueList, String.valueOf(eventList.size())};
+                        ResearchEventPublisher.publishCompositeEvent(compositeEvent);
+                    } else {
+//                        System.out.println("");
                     }
-                    int dummyCount = batchSize - eventList.size();
-                    for (int i = 0; i < dummyCount; i++) {
-                        valueBuilder.append(0);
-                        valueBuilder.append(",");
-                    }
-                    String valueList = valueBuilder.toString().replaceAll(",$", "");
-                    String encryptedValueList = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(valueList);
-                    Object[] compositeEvent = {timestampBuilder.toString().replaceAll(",$", ""), encryptedValueList, String.valueOf(eventList.size())};
-                    ResearchEventPublisher.publishCompositeEvent(compositeEvent);
-
                 } catch (Throwable t) {
                     System.out.println("Error 7 - " + t);
                     t.printStackTrace();
                 }
             }
-        }, 10000, 60, TimeUnit.MILLISECONDS);
+        }, 10000, 100, TimeUnit.MILLISECONDS);
 
     }
 

@@ -25,7 +25,7 @@ public class PublicCloudDataPublishManager implements DataPublishDecisionListene
 
     Map<Integer, DataPublishDecisionTaker> dataPublishDecisionTakers = new HashMap<>();
     Map<Integer, VMConfig> vmIdToConfigurations = new HashMap<>();
-    private static Map<Integer, DataPublisher> vmIdToDataPublisher = new ConcurrentHashMap<>();
+    public static Map<Integer, DataPublisher> vmIdToDataPublisher = new ConcurrentHashMap<>();
 
     private static Properties prop;
 
