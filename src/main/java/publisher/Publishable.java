@@ -1,5 +1,7 @@
 package publisher;
 
+import java.io.IOException;
+
 /**
  * Created by sajith on 7/24/16.
  */
@@ -22,5 +24,5 @@ public abstract class Publishable {
     }
 
 
-    public abstract void startPublishing();
+    public abstract void startPublishing() throws IOException;
 }

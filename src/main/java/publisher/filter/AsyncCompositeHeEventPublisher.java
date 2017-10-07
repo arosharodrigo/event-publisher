@@ -49,7 +49,7 @@ public class AsyncCompositeHeEventPublisher {
                         String valueList = valueBuilder.toString().replaceAll(",$", "");
                         String encryptedValueList = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(valueList);
                         Object[] compositeEvent = {timestampBuilder.toString().replaceAll(",$", ""), encryptedValueList, String.valueOf(eventList.size())};
-                        ResearchEventPublisher.publishCompositeEvent(compositeEvent);
+//                        ResearchEventPublisher.publishCompositeEvent(compositeEvent);
                     } else {
 //                        System.out.println("");
                     }

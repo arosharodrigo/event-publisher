@@ -26,6 +26,7 @@ import org.wso2.carbon.databridge.agent.AgentHolder;
 import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.databridge.commons.Event;
 import org.wso2.siddhi.extension.he.api.HomomorphicEncDecService;
+import publisher.email.EmailBenchmarkPublisher;
 import publisher.filter.AsyncCompositeHeEventPublisher;
 import publisher.filter.FilterBenchmarkPublisher;
 import publisher.schedular.PublicCloudDataPublishManager;
@@ -73,7 +74,8 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int publishingRate = 6000;
     private static int publicCloudPublishBatchSize = 1000;
 
-    public static FilterBenchmarkPublisher publisher;
+//    public static FilterBenchmarkPublisher publisher;
+    public static EmailBenchmarkPublisher publisher;
     public static HomomorphicEncDecService homomorphicEncDecService;
 
     private static Properties prop;
@@ -180,10 +182,10 @@ public class ResearchEventPublisher implements WrapperListener {
 //            eventPayload = compress(eventPayload);
 //            eventPayload = encrypt(eventPayload);
 //            streamId = publisher.getStreamId(true);
-//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-//            currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
-//            currentDataPublisher.tryPublish(event);
-            AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
+            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+            currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
+            currentDataPublisher.tryPublish(event);
+//            AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
         }
 
         if (currentDataPublisher != privateDataPublisher){
@@ -206,11 +208,11 @@ public class ResearchEventPublisher implements WrapperListener {
         }
     }
 
-    public static void publishCompositeEvent(Object[] compositeEventPayload) {
-        Event event = new Event(publisher.getStreamId(true), System.currentTimeMillis(), null, null, compositeEventPayload);
-        DataPublisher dataPublisher = PublicCloudDataPublishManager.vmIdToDataPublisher.get(1);
-        dataPublisher.tryPublish(event);
-    }
+//    public static void publishCompositeEvent(Object[] compositeEventPayload) {
+//        Event event = new Event(publisher.getStreamId(true), System.currentTimeMillis(), null, null, compositeEventPayload);
+//        DataPublisher dataPublisher = PublicCloudDataPublishManager.vmIdToDataPublisher.get(1);
+//        dataPublisher.tryPublish(event);
+//    }
 
     /**
      * Call back form VM manager to notify that a VM has started
@@ -321,7 +323,10 @@ public class ResearchEventPublisher implements WrapperListener {
             }
 
 
-            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
+//            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
+//            publisher.startPublishing();
+
+            publisher = new EmailBenchmarkPublisher();
             publisher.startPublishing();
 
             //Publishable debs2016Query1Publisher = new Debs2016Query1Publisher();
