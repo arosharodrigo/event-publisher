@@ -16,7 +16,7 @@
 
 <dataBridgeConfiguration>
 
-    <workerThreads>100</workerThreads>
+    <workerThreads>1000</workerThreads>
     <eventBufferCapacity>10000</eventBufferCapacity>
     <clientTimeoutMin>30</clientTimeoutMin>
 
