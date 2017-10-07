@@ -1,10 +1,9 @@
 package publisher.schedular.util;
 
+import publisher.util.Configuration;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 import java.util.TimerTask;
 
 /**
@@ -22,31 +21,9 @@ public class StatisticsInputReaderTask extends TimerTask {
     private static final int CURRENT_LATENCY_COLUMN = 4;
     private static final int ELAPSED_TIME_COLUMN = 0;
 
-    private static Properties prop;
-
-    static {
-        prop = new Properties();
-        InputStream input = null;
-        try {
-            String filename = "config.properties";
-            input = StatisticsInputReaderTask.class.getClassLoader().getResourceAsStream(filename);
-            prop.load(input);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally{
-            if(input!=null){
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     public void readCurrentValuesFromFile() {
         try {
-            BufferedReader input = new BufferedReader(new FileReader(prop.getProperty("result.file.fullpath")));
+            BufferedReader input = new BufferedReader(new FileReader(Configuration.getProperty("result.file.fullpath")));
             String lastLine = null;
             String currentLine;
 

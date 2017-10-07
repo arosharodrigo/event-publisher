@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import publisher.Publishable;
 import publisher.ResearchEventPublisher;
+import publisher.util.Configuration;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class EmailBenchmarkPublisher extends Publishable {
     private AtomicLong messageSize = new AtomicLong(0);
 
     public EmailBenchmarkPublisher() {
-        super("inputEmailsStream:1.0.0", "/home/arosha/helib-keys/data/enron.avro");
+        super("inputEmailsStream:1.0.0", Configuration.getProperty("data.path.email"));
         //super("reducedEmailInputStream:1.0.0", "/home/sajith/research/email-benchmark/EmailDataSet/enron.avro");
     }
 
@@ -44,7 +45,7 @@ public class EmailBenchmarkPublisher extends Publishable {
             public void run() {
                 try {
                     if(dataFileReader.hasNext()) {
-                        for(int i = 0;i < 100;i++) {
+                        for(int i = 0;i < 1000;i++) {
                             readData(dataFileReader);
                         }
                     } else {
@@ -62,13 +63,16 @@ public class EmailBenchmarkPublisher extends Publishable {
             @Override
             public void run() {
                 try {
-                    EventWrapper event = eventQueue.poll();
-                    int iterations = 20;
+                    int iterations = 10;
+                    int repeatCount = 2;
                     for(int i = 0;i < iterations;i++) {
-                        ResearchEventPublisher.publishEvent(event.getEvent(), getStreamId());
+                        EventWrapper event = eventQueue.poll();
+                        for(int j = 0;j < repeatCount;j++) {
+                            ResearchEventPublisher.publishEvent(event.getEvent(), getStreamId());
+                            int eventsSize = event.getEventSizeInBytes();
+                            messageSize.addAndGet(eventsSize);
+                        }
                     }
-                    int eventsSize = event.getEventSizeInBytes() * iterations / 1024;
-                    messageSize.addAndGet(eventsSize);
                 } catch (Throwable t) {
                     System.out.println("Error 6 - " + t);
                     t.printStackTrace();
@@ -83,7 +87,7 @@ public class EmailBenchmarkPublisher extends Publishable {
             public void run() {
                 try {
                     long currentMessageSize = messageSize.getAndSet(0);
-                    log.info("Input data rate: [" + currentMessageSize + "]KB per second");
+                    log.info("Input data rate: [" + (currentMessageSize/1024) + "]KB per second");
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }

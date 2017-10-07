@@ -35,6 +35,7 @@ import publisher.schedular.util.DataPublisherUtil;
 import publisher.schedular.util.StatisticsInputReaderTask;
 import publisher.schedular.vm.VMConfig;
 import publisher.schedular.vm.VMManager;
+import publisher.util.Configuration;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,32 +78,6 @@ public class ResearchEventPublisher implements WrapperListener {
 //    public static FilterBenchmarkPublisher publisher;
     public static EmailBenchmarkPublisher publisher;
     public static HomomorphicEncDecService homomorphicEncDecService;
-
-    private static Properties prop;
-
-    private static boolean isHeEventMode;
-
-    static {
-        prop = new Properties();
-        InputStream input = null;
-        try {
-            String filename = "config.properties";
-            input = StatisticsInputReaderTask.class.getClassLoader().getResourceAsStream(filename);
-            prop.load(input);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally{
-            if(input!=null){
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        AsyncCompositeHeEventPublisher.init();
-        isHeEventMode = Boolean.parseBoolean(prop.getProperty("he.event.mode"));
-    }
 
     public static void main(String[] args) throws InterruptedException {
         WrapperManager.start(new ResearchEventPublisher(), args);
@@ -294,7 +269,7 @@ public class ResearchEventPublisher implements WrapperListener {
         System.out.println("=================================================================================");
 
         homomorphicEncDecService = new HomomorphicEncDecService();
-        homomorphicEncDecService.init(prop.getProperty("key.file.path"));
+        homomorphicEncDecService.init(Configuration.getProperty("key.file.path"));
 
         // To avoid exception xml parsing error occur for java 8
         System.setProperty("org.xml.sax.driver", "com.sun.org.apache.xerces.internal.parsers.SAXParser");
@@ -313,7 +288,7 @@ public class ResearchEventPublisher implements WrapperListener {
             DataPublisherUtil.setPseudoCarbonHome();
             DataPublisherUtil.loadStreamDefinitions();
 
-            privateDataPublisher = new DataPublisher(prop.getProperty("protocol"),  prop.getProperty("private.das.receiver.url") , null, USER_NAME, PASSWORD);
+            privateDataPublisher = new DataPublisher(Configuration.getProperty("protocol"),  Configuration.getProperty("private.das.receiver.url") , null, USER_NAME, PASSWORD);
             currentDataPublisher = privateDataPublisher;
 
 
