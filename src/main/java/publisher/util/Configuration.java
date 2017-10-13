@@ -1,6 +1,5 @@
 package publisher.util;
 
-import publisher.filter.AsyncCompositeHeEventPublisher;
 import publisher.schedular.util.StatisticsInputReaderTask;
 
 import java.io.IOException;
@@ -29,7 +28,6 @@ public class Configuration {
                 }
             }
         }
-        AsyncCompositeHeEventPublisher.init();
     }
 
     public static String getProperty(String key) {
