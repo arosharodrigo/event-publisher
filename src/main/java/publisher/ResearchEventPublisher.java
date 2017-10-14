@@ -68,16 +68,18 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int totalSentToPublicCloud;
 
     private static int eventPercentageToBeSentToPublicCloud = 0;
-    private static int maxEventPercentageToBeSentToPublicCloud = 15;
+    private static int maxEventPercentageToBeSentToPublicCloud = 1;
 
-    private static int publicCloudPublishingRatioPerVm = 3; // Tells how much events to be published to public cloud for every 1000 events;
+    private static int publicCloudPublishingRatioPerVm = 1; // Tells how much events to be published to public cloud for every 1000 events;
     private static boolean isSwitching = true;
     private static int publishingRate = 6000;
-    private static int publicCloudPublishBatchSize = 1000;
+    private static int publicCloudPublishBatchSize = 40000;
 
 //    public static FilterBenchmarkPublisher publisher;
     public static EmailBenchmarkPublisher publisher;
     public static HomomorphicEncDecService homomorphicEncDecService;
+
+    private static final int batchSize = 478;
 
     public static void main(String[] args) throws InterruptedException {
         WrapperManager.start(new ResearchEventPublisher(), args);
@@ -86,7 +88,8 @@ public class ResearchEventPublisher implements WrapperListener {
     private static void initVmManager(){
         List<VMConfig> vmConfigList = new ArrayList<>();
 
-//        vmConfigList.add(new VMConfig(1, Integer.valueOf(prop.getProperty("public.das.vm1.port")), prop.getProperty("public.das.vm1.ip"), 5 * 1000,  10 * 1000, 1000));
+        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 4 * 1000,  6 * 1000, 2 * 1000));
+//        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000)); - 40000 tps support and good percent to public VM
 //        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.134", 10, 10, 10));
         //vmConfigList.add(new VMConfig(2, 7611, "192.168.57.81", 20 * 1000,  22 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(3, 7611, "192.168.57.82", 30 * 1000,  32 * 1000, 10 * 1000));
@@ -124,6 +127,47 @@ public class ResearchEventPublisher implements WrapperListener {
         return modifiedPayload;
     }
 
+    public static Object[] encrypt2(Object[] eventPayload){
+        Object[] modifiedPayload = new Object[eventPayload.length];
+        try {
+            modifiedPayload[0] = eventPayload[0];
+            modifiedPayload[4] = eventPayload[4];
+            modifiedPayload[5] = eventPayload[5];
+            modifiedPayload[6] = eventPayload[6];
+            modifiedPayload[7] = eventPayload[7];
+
+            String from = (String)eventPayload[1];
+            modifiedPayload[1] = encryptToStr(from, batchSize);
+            String to = (String)eventPayload[2];
+            String[] toArr = to.split(",");
+            modifiedPayload[2] = encryptToStr(toArr[0], batchSize);
+            String cc = (String)eventPayload[3];
+            String[] ccArr = cc.split(",");
+            modifiedPayload[3] = encryptToStr(ccArr[0], batchSize);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error2 - " + e);
+        }
+        return modifiedPayload;
+    }
+
+    private static String encryptToStr(String param, int batchSize) {
+        StringBuilder valueBuilder = new StringBuilder();
+        byte[] paramBytes = param.getBytes();
+        for(byte value : paramBytes) {
+            valueBuilder.append(value);
+            valueBuilder.append(",");
+        }
+        int dummyCount = batchSize - paramBytes.length;
+        for(int i = 0;i < dummyCount; i++) {
+            valueBuilder.append(0);
+            valueBuilder.append(",");
+        }
+        String valueList = valueBuilder.toString().replaceAll(",$", "");
+        String encryptedParam = homomorphicEncDecService.encryptLongVector(valueList);
+        return encryptedParam;
+    }
+
     /*public static byte[] compress(String data) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(data.length());
         GZIPOutputStream gzip = new GZIPOutputStream(bos);
@@ -148,6 +192,18 @@ public class ResearchEventPublisher implements WrapperListener {
 //            } else {
                 Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
                 currentDataPublisher.publish(event);
+
+//            AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
+
+            //****** Remove this b4 perf test ******//
+//            streamId = "inputHEEmailsStream:1.0.0";
+//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, encrypt2(eventPayload));
+//            currentDataPublisher.publish(event);
+//            DataPublisher dataPublisher = PublicCloudDataPublishManager.vmIdToDataPublisher.get(1);
+//            dataPublisher.tryPublish(event);
+//            currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
+//            currentDataPublisher.tryPublish(event);
+
 //            }
         }
 
@@ -157,10 +213,19 @@ public class ResearchEventPublisher implements WrapperListener {
 //            eventPayload = compress(eventPayload);
 //            eventPayload = encrypt(eventPayload);
 //            streamId = publisher.getStreamId(true);
+
+//            streamId = "inputHEEmailsStream:1.0.0";
+//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, encrypt2(eventPayload));
+//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+
+//            DataPublisher dataPublisher = PublicCloudDataPublishManager.vmIdToDataPublisher.get(1);
+//            dataPublisher.tryPublish(event);
+//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+//            currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
+//            currentDataPublisher.tryPublish(event);
+            streamId = "inputHEEmailsStream:1.0.0";
             Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-            currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
-            currentDataPublisher.tryPublish(event);
-//            AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
+            AsyncCompositeHeEventPublisher.addToQueue(event);
         }
 
         if (currentDataPublisher != privateDataPublisher){
@@ -169,16 +234,16 @@ public class ResearchEventPublisher implements WrapperListener {
                 currentPublicPublishCount = 0;
             }
         }
-
-        if (++count % publishingRate == 0) {
-            Thread.sleep(1000);
-        }
+        ++count;
+//        if ( % publishingRate == 0) {
+//            Thread.sleep(1000);
+//        }
 
         if (count % 100000 == 0){
             log.info("Done Sending " + (float)count/1000000.0  + " M Events[TotalSentToPublicCloud=" + totalSentToPublicCloud + ", PublicCloudSendingRatio=" + eventPercentageToBeSentToPublicCloud + "]");
         }
 
-        if (count == 7500000){
+        if (count == 100000000){
             System.exit(0);
         }
     }
@@ -291,12 +356,11 @@ public class ResearchEventPublisher implements WrapperListener {
             privateDataPublisher = new DataPublisher(Configuration.getProperty("protocol"),  Configuration.getProperty("private.das.receiver.url") , null, USER_NAME, PASSWORD);
             currentDataPublisher = privateDataPublisher;
 
-
             if (isSwitching) {
                 initVmManager();
                 vmManager.start();
             }
-
+            AsyncCompositeHeEventPublisher.init();
 
 //            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
 //            publisher.startPublishing();

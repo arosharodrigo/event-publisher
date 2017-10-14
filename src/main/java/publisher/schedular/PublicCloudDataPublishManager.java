@@ -3,7 +3,11 @@ package publisher.schedular;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.databridge.agent.DataPublisher;
+import org.wso2.carbon.databridge.agent.exception.DataEndpointAgentConfigurationException;
+import org.wso2.carbon.databridge.agent.exception.DataEndpointAuthenticationException;
+import org.wso2.carbon.databridge.agent.exception.DataEndpointConfigurationException;
 import org.wso2.carbon.databridge.agent.exception.DataEndpointException;
+import org.wso2.carbon.databridge.commons.exception.TransportException;
 import publisher.DataPublishDecisionTaker;
 import publisher.ResearchEventPublisher;
 import publisher.schedular.util.Configurations;
@@ -25,7 +29,7 @@ public class PublicCloudDataPublishManager implements DataPublishDecisionListene
     private static Log log = LogFactory.getLog(PublicCloudDataPublishManager.class);
 
     Map<Integer, DataPublishDecisionTaker> dataPublishDecisionTakers = new HashMap<>();
-    Map<Integer, VMConfig> vmIdToConfigurations = new HashMap<>();
+    public static Map<Integer, VMConfig> vmIdToConfigurations = new HashMap<>();
     public static Map<Integer, DataPublisher> vmIdToDataPublisher = new ConcurrentHashMap<>();
 
     /**
@@ -115,5 +119,11 @@ public class PublicCloudDataPublishManager implements DataPublishDecisionListene
         DataPublisher dataPublisher = vmIdToDataPublisher.get(vmId);
         ResearchEventPublisher.onStopSendingDataToVM(dataPublisher);
         log.debug("Stopping sending data to VM[ID=" + vmId + "]");
+    }
+
+    public static DataPublisher generateDataPublisher(int vmId) throws Exception {
+        VMConfig vmConfig = vmIdToConfigurations.get(vmId);
+        return new DataPublisher(Configuration.getProperty("protocol"),
+                vmConfig.getThriftUrl(), null, ResearchEventPublisher.USER_NAME, ResearchEventPublisher.PASSWORD);
     }
 }
