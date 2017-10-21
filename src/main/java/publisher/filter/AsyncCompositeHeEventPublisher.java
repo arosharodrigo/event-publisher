@@ -16,16 +16,19 @@ public class AsyncCompositeHeEventPublisher {
     private static Log log = LogFactory.getLog(AsyncCompositeHeEventPublisher.class);
 
     private static final String FIELD_SEPARATOR = "###";
+    private static final String COMMA_SEPARATOR = ",";
 
     private static Queue<Event> plainQueue;
     private static Queue<Event> encryptedQueue;
 
-    private static ExecutorService encryptExecutorService;
-    private static ExecutorService encryptScheduler;
+    private static ExecutorService encryptWorkers;
+    private static ExecutorService encryptBossScheduler;
     private static ScheduledExecutorService encryptedEventsPublishExecutorService;
 
     private static ScheduledExecutorService logExecutorService;
     private static final int batchSize = 478;
+    private static final int maxEmailLength = 40;
+    private static final int compositeEventSize = 10;
 
     private static AtomicLong totalEncryptedCount = new AtomicLong(0);
 
@@ -33,21 +36,21 @@ public class AsyncCompositeHeEventPublisher {
         plainQueue = new ArrayBlockingQueue<>(10000000);
         encryptedQueue = new ArrayBlockingQueue<>(10000000);
 
-        encryptExecutorService = Executors.newFixedThreadPool(20);
+        encryptWorkers = Executors.newFixedThreadPool(20);
 
-        encryptScheduler = Executors.newSingleThreadExecutor();
-        encryptScheduler.submit(() -> {
+        encryptBossScheduler = Executors.newSingleThreadExecutor();
+        encryptBossScheduler.submit(() -> {
             try {
                 while(true) {
-                    if(plainQueue.size() > 10) {
+                    if(plainQueue.size() > compositeEventSize) {
                         List<Event> events = new ArrayList<>();
-                        for(int i=0; i < 10; i++) {
+                        for(int i=0; i < compositeEventSize; i++) {
                             events.add(plainQueue.poll());
                         }
-                        encryptExecutorService.submit(() -> {
-                            Event encryptedEvent = new Event(event.getStreamId(), event.getTimeStamp(), null, null, ResearchEventPublisher.encrypt2(event.getPayloadData()));
+                        encryptWorkers.submit(() -> {
+                            Event encryptedEvent = createCompositeEvent(events);
                             encryptedQueue.add(encryptedEvent);
-                            totalEncryptedCount.addAndGet(10);
+                            totalEncryptedCount.addAndGet(compositeEventSize);
                         });
                     } else {
                         Thread.sleep(50);
@@ -70,6 +73,15 @@ public class AsyncCompositeHeEventPublisher {
                             Event event = encryptedQueue.poll();
 //                            dataPublisher.tryPublish(event);
                             ResearchEventPublisher.sendThroughPrivatePublisher(event);
+//                            log.info("Composite event [" +
+//                                    event.getPayloadData()[0] + "," +
+//                                    event.getPayloadData()[1] + "," +
+//                                    event.getPayloadData()[2] + "," +
+//                                    event.getPayloadData()[3] + "," +
+//                                    event.getPayloadData()[4] + "," +
+//                                    event.getPayloadData()[5] + "," +
+//                                    event.getPayloadData()[6] + "," +
+//                                    event.getPayloadData()[7] + "]");
                         }
                     } else {
 //                        System.out.println("");
@@ -91,62 +103,80 @@ public class AsyncCompositeHeEventPublisher {
     }
 
     public static Event createCompositeEvent(List<Event> events){
-        StringBuilder feild1Builder = new StringBuilder();
-        StringBuilder feild2Builder = new StringBuilder();
-        StringBuilder feild3Builder = new StringBuilder();
-        StringBuilder feild4Builder = new StringBuilder();
-        StringBuilder feild5Builder = new StringBuilder();
-        StringBuilder feild6Builder = new StringBuilder();
-        StringBuilder feild7Builder = new StringBuilder();
-        StringBuilder feild8Builder = new StringBuilder();
+        StringBuilder field1Builder = new StringBuilder();
+        StringBuilder field2Builder = new StringBuilder();
+        StringBuilder field3Builder = new StringBuilder();
+        StringBuilder field4Builder = new StringBuilder();
+        StringBuilder field5Builder = new StringBuilder();
+        StringBuilder field6Builder = new StringBuilder();
+        StringBuilder field7Builder = new StringBuilder();
+        StringBuilder field8Builder = new StringBuilder();
         for(Event event : events) {
             Object[] payloadData = event.getPayloadData();
-            feild1Builder.append(payloadData[0]).append(FIELD_SEPARATOR);
-            feild5Builder.append(payloadData[4]).append(FIELD_SEPARATOR);
-            feild6Builder.append(payloadData[5]).append(FIELD_SEPARATOR);
-            feild7Builder.append(payloadData[6]).append(FIELD_SEPARATOR);
-            feild8Builder.append(payloadData[7]).append(FIELD_SEPARATOR);
+            field1Builder.append(payloadData[0]).append(FIELD_SEPARATOR);
+            field5Builder.append(payloadData[4]).append(FIELD_SEPARATOR);
+            field6Builder.append(payloadData[5]).append(FIELD_SEPARATOR);
+            field7Builder.append(payloadData[6]).append(FIELD_SEPARATOR);
+            field8Builder.append(payloadData[7]).append(FIELD_SEPARATOR);
 
             String from = (String)payloadData[1];
-        }
+            field2Builder.append(convertToBinaryForm(from, maxEmailLength)).append(COMMA_SEPARATOR);
 
-        Object[] modifiedPayload = new Object[eventPayload.length];
-        try {
-            modifiedPayload[0] = eventPayload[0];
-            modifiedPayload[4] = eventPayload[4];
-            modifiedPayload[5] = eventPayload[5];
-            modifiedPayload[6] = eventPayload[6];
-            modifiedPayload[7] = eventPayload[7];
-
-            String from = (String)eventPayload[1];
-            modifiedPayload[1] = encryptToStr(from, batchSize);
-            String to = (String)eventPayload[2];
+            String to = (String)payloadData[2];
             String[] toArr = to.split(",");
-            modifiedPayload[2] = encryptToStr(toArr[0], batchSize);
-            String cc = (String)eventPayload[3];
+            field3Builder.append(convertToBinaryForm(toArr[0], maxEmailLength)).append(COMMA_SEPARATOR);
+
+            String cc = (String)payloadData[3];
             String[] ccArr = cc.split(",");
-            modifiedPayload[3] = encryptToStr(ccArr[0], batchSize);
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Error2 - " + e);
+            field4Builder.append(convertToBinaryForm(ccArr[0], maxEmailLength)).append(COMMA_SEPARATOR);
         }
-        return modifiedPayload;
+
+        Object[] modifiedPayload = new Object[8];
+        modifiedPayload[0] = field1Builder.toString().replaceAll(FIELD_SEPARATOR + "$", "");
+        modifiedPayload[4] = field5Builder.toString().replaceAll(FIELD_SEPARATOR + "$", "");
+        modifiedPayload[5] = field6Builder.toString().replaceAll(FIELD_SEPARATOR + "$", "");
+        modifiedPayload[6] = field7Builder.toString().replaceAll(FIELD_SEPARATOR + "$", "");
+        modifiedPayload[7] = field8Builder.toString().replaceAll(FIELD_SEPARATOR + "$", "");
+
+        int remainingSlots = batchSize - (compositeEventSize * maxEmailLength);
+        for(int i = 0; i < remainingSlots; i++) {
+            field2Builder.append(0);
+            field2Builder.append(",");
+            field3Builder.append(0);
+            field3Builder.append(",");
+            field4Builder.append(0);
+            field4Builder.append(",");
+        }
+
+        String field2 = field2Builder.toString().replaceAll(",$", "");
+        String encryptedField2 = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(field2);
+        modifiedPayload[1] = encryptedField2;
+
+        String field3 = field3Builder.toString().replaceAll(",$", "");
+        String encryptedField3 = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(field3);
+        modifiedPayload[2] = encryptedField3;
+
+        String field4 = field4Builder.toString().replaceAll(",$", "");
+        String encryptedField4 = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(field4);
+        modifiedPayload[3] = encryptedField4;
+
+        return new Event(events.get(0).getStreamId(), events.get(0).getTimeStamp(), null, null, modifiedPayload);
     }
 
-    private static String encryptToStr(String param, int batchSize) {
+    private static String convertToBinaryForm(String param, int batchSize) {
         StringBuilder valueBuilder = new StringBuilder();
         byte[] paramBytes = param.getBytes();
-        for(byte value : paramBytes) {
-            valueBuilder.append(value);
+        int minimumSize = (paramBytes.length < batchSize) ? paramBytes.length : batchSize;
+        for(int i = 0; i < minimumSize; i++) {
+            valueBuilder.append(paramBytes[i]);
             valueBuilder.append(",");
         }
-        int dummyCount = batchSize - paramBytes.length;
-        for(int i = 0;i < dummyCount; i++) {
+        int dummyCount = batchSize - minimumSize;
+        for(int j = 0;j < dummyCount; j++) {
             valueBuilder.append(0);
             valueBuilder.append(",");
         }
         String valueList = valueBuilder.toString().replaceAll(",$", "");
-//        String encryptedParam = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(valueList);
         return valueList;
     }
 
