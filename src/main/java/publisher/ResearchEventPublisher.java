@@ -36,10 +36,12 @@ import publisher.schedular.util.StatisticsInputReaderTask;
 import publisher.schedular.vm.VMConfig;
 import publisher.schedular.vm.VMManager;
 import publisher.util.Configuration;
+import publisher.util.GzipUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
 
@@ -71,7 +73,7 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int maxEventPercentageToBeSentToPublicCloud = 1;
 
     private static int publicCloudPublishingRatioPerVm = 1; // Tells how much events to be published to public cloud for every 1000 events;
-    private static boolean isSwitching = true;
+    private static boolean isSwitching = false;
     private static int publishingRate = 6000;
     private static int publicCloudPublishBatchSize = 40000;
 
@@ -88,7 +90,7 @@ public class ResearchEventPublisher implements WrapperListener {
     private static void initVmManager(){
         List<VMConfig> vmConfigList = new ArrayList<>();
 
-        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 4 * 1000,  6 * 1000, 2 * 1000));
+//        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 4 * 1000,  6 * 1000, 2 * 1000));
 //        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000)); - 40000 tps support and good percent to public VM
 //        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.134", 10, 10, 10));
         //vmConfigList.add(new VMConfig(2, 7611, "192.168.57.81", 20 * 1000,  22 * 1000, 10 * 1000));
@@ -165,6 +167,17 @@ public class ResearchEventPublisher implements WrapperListener {
         }
         String valueList = valueBuilder.toString().replaceAll(",$", "");
         String encryptedParam = homomorphicEncDecService.encryptLongVector(valueList);
+//        try {
+//            log.info("Encrypted length [" + encryptedParam.length() + "]");
+//            byte[] compress = GzipUtil.compress(encryptedParam);
+//            String result = Base64.getEncoder().encodeToString(compress);
+//            log.info("After compressed length [" + result.length() + "]");
+//            byte[] decode = Base64.getDecoder().decode(result);
+//            String decompress = GzipUtil.decompress(decode);
+//            log.info("Is equal [" + (decompress.equals(encryptedParam)) + "]");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         return encryptedParam;
     }
 
@@ -190,8 +203,12 @@ public class ResearchEventPublisher implements WrapperListener {
 //            if(isHeEventMode) {
 //                AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
 //            } else {
-                Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-                currentDataPublisher.publish(event);
+//                Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+//                currentDataPublisher.publish(event);
+
+            streamId = "inputHEEmailsStream:1.0.0";
+            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+            AsyncCompositeHeEventPublisher.addToQueue(event);
 
 //            AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
 
@@ -389,5 +406,9 @@ public class ResearchEventPublisher implements WrapperListener {
     @Override
     public void controlEvent(int i) {
 
+    }
+
+    public static void sendThroughPrivatePublisher(Event event) {
+        currentDataPublisher.publish(event);
     }
 }

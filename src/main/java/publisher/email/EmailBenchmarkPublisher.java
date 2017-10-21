@@ -45,7 +45,7 @@ public class EmailBenchmarkPublisher extends Publishable {
             public void run() {
                 try {
                     if(dataFileReader.hasNext()) {
-                        for(int i = 0;i < 5;i++) {
+                        for(int i = 0;i < 1;i++) {
                             readData(dataFileReader);
                         }
                     } else {
@@ -56,21 +56,23 @@ public class EmailBenchmarkPublisher extends Publishable {
                     t.printStackTrace();
                 }
             }
-        }, 2000, 10, TimeUnit.MILLISECONDS);
+        }, 2000, 20, TimeUnit.MILLISECONDS);
 
         ScheduledExecutorService scheduledExecutorServiceDataPublisher = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorServiceDataPublisher.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 try {
-                    int iterations = 5;
-                    int repeatCount = 80;
+                    int iterations = 1;
+                    int repeatCount = 1;
                     for(int i = 0;i < iterations;i++) {
                         EventWrapper event = eventQueue.poll();
-                        for(int j = 0;j < repeatCount;j++) {
-                            ResearchEventPublisher.publishEvent(event.getEvent(), getStreamId());
-                            int eventsSize = event.getEventSizeInBytes();
-                            messageSize.addAndGet(eventsSize);
+                        if(event != null) {
+                            for (int j = 0; j < repeatCount; j++) {
+                                ResearchEventPublisher.publishEvent(event.getEvent(), getStreamId());
+                                int eventsSize = event.getEventSizeInBytes();
+                                messageSize.addAndGet(eventsSize);
+                            }
                         }
                     }
                 } catch (Throwable t) {
@@ -79,7 +81,7 @@ public class EmailBenchmarkPublisher extends Publishable {
                 }
 
             }
-        }, 5000, 10, TimeUnit.MILLISECONDS);
+        }, 5000, 20, TimeUnit.MILLISECONDS);
 
         ScheduledExecutorService scheduledExecutorServiceDataRatePrinter = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorServiceDataRatePrinter.scheduleAtFixedRate(new Runnable() {

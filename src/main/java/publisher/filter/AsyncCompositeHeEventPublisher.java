@@ -17,36 +17,37 @@ public class AsyncCompositeHeEventPublisher {
 
     private static Log log = LogFactory.getLog(AsyncCompositeHeEventPublisher.class);
 
-    private static Queue<Event> plainQueue;
+//    private static Queue<Event> plainQueue;
     private static Queue<Event> encryptedQueue;
-    private static DataPublisher dataPublisher;
+//    private static DataPublisher dataPublisher;
     private static ScheduledExecutorService scheduledExecutorService;
     private static ExecutorService encryptExecutorService;
+    private static ScheduledExecutorService logExecutorService;
     private static final int batchSize = 478;
 
     private static AtomicLong totalEncryptedCount = new AtomicLong(0);
 
     public static void init() throws Exception {
-        plainQueue = new ArrayBlockingQueue<>(10000000);
+//        plainQueue = new ArrayBlockingQueue<>(10000000);
         encryptedQueue = new ArrayBlockingQueue<>(10000000);
 
-        encryptExecutorService = Executors.newSingleThreadExecutor();
-        encryptExecutorService.submit(() -> {
-            try {
-                while(true) {
-                    Event event = plainQueue.poll();
-                    if (event != null) {
-                        Event encryptedEvent = new Event(event.getStreamId(), event.getTimeStamp(), null, null, ResearchEventPublisher.encrypt2(event.getPayloadData()));
-                        encryptedQueue.add(encryptedEvent);
-                        totalEncryptedCount.incrementAndGet();
-                    } else {
-                        Thread.sleep(50);
-                    }
-                }
-            } catch (Throwable th) {
-                log.error("Error occurred in encrypting thread", th);
-            }
-        });
+//        encryptExecutorService = Executors.newSingleThreadExecutor();
+//        encryptExecutorService.submit(() -> {
+//            try {
+//                while(true) {
+//                    Event event = plainQueue.poll();
+//                    if (event != null) {
+//                        Event encryptedEvent = new Event(event.getStreamId(), event.getTimeStamp(), null, null, ResearchEventPublisher.encrypt2(event.getPayloadData()));
+//                        encryptedQueue.add(encryptedEvent);
+//                        totalEncryptedCount.incrementAndGet();
+//                    } else {
+//                        Thread.sleep(50);
+//                    }
+//                }
+//            } catch (Throwable th) {
+//                log.error("Error occurred in encrypting thread", th);
+//            }
+//        });
 
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorService.scheduleAtFixedRate(() -> {
@@ -54,20 +55,21 @@ public class AsyncCompositeHeEventPublisher {
                     int encryptedQueueSize = encryptedQueue.size();
                     if(encryptedQueueSize > 0) {
 //                        log.info("Current Encrypted queue size [" + encryptedQueueSize + "], Total Encrypted count [" + totalEncryptedCount.get() + "]");
-                        if(dataPublisher == null) {
-                            dataPublisher = PublicCloudDataPublishManager.generateDataPublisher(1);
-                        }
+//                        if(dataPublisher == null) {
+//                            dataPublisher = PublicCloudDataPublishManager.generateDataPublisher(1);
+//                        }
                         for(int i=0; i < encryptedQueueSize; i++) {
                             Event event = encryptedQueue.poll();
-                            dataPublisher.tryPublish(event);
+//                            dataPublisher.tryPublish(event);
+                            ResearchEventPublisher.sendThroughPrivatePublisher(event);
                         }
                     } else {
 //                        System.out.println("");
                     }
                 } catch (Throwable t) {
-                    log.error("Error 7 - " + t);
+                    t.printStackTrace();
                 }
-        }, 10000, 10, TimeUnit.MILLISECONDS);
+        }, 5000, 10, TimeUnit.MILLISECONDS);
 
 //        encryptExecutorService = Executors.newFixedThreadPool(100);
 //        encryptExecutorService.scheduleAtFixedRate(new Runnable() {
@@ -83,10 +85,25 @@ public class AsyncCompositeHeEventPublisher {
 //            }
 //        }, 10000, 10, TimeUnit.MILLISECONDS);
 
+        encryptExecutorService = Executors.newFixedThreadPool(20);
+
+
+        logExecutorService = Executors.newSingleThreadScheduledExecutor();
+        logExecutorService.scheduleAtFixedRate(() -> {
+//                log.info("Current Plain queue size [" + plainQueue.size() + "], Encrypted queue size [" + encryptedQueue.size() + "]");
+                log.info("Encrypted queue size [" + encryptedQueue.size() + "], Total Encrypted count [" + totalEncryptedCount.get() + "]");
+        }, 5000, 5000, TimeUnit.MILLISECONDS);
+
     }
 
     public static void addToQueue(Event event) {
-        plainQueue.add(event);
+        encryptExecutorService.submit(() -> {
+            Event encryptedEvent = new Event(event.getStreamId(), event.getTimeStamp(), null, null, ResearchEventPublisher.encrypt2(event.getPayloadData()));
+//            encryptedQueue.add(event);
+            encryptedQueue.add(encryptedEvent);
+            totalEncryptedCount.incrementAndGet();
+        });
+//        plainQueue.add(event);
     }
 
 }
