@@ -85,4 +85,8 @@ public class VMManager implements VMStartDecisionListener, VMEventListener {
         }
 
     }
+
+    public VMConfig getVmConfig(int vmId) {
+        return vmIdToConfigurations.get(vmId);
+    }
 }

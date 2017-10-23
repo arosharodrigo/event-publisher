@@ -57,6 +57,7 @@ public class ResearchEventPublisher implements WrapperListener {
 
     private static DataPublisher privateDataPublisher;
     private static DataPublisher currentDataPublisher;
+    private static DataPublisher vm1DataPublisher;
 
     private static PublicCloudDataPublishManager publicCloudDataPublishManager = new PublicCloudDataPublishManager();
     private static ArrayList<DataPublisher> publicCloudPublishers = new ArrayList<DataPublisher>();
@@ -73,7 +74,7 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int maxEventPercentageToBeSentToPublicCloud = 1;
 
     private static int publicCloudPublishingRatioPerVm = 1; // Tells how much events to be published to public cloud for every 1000 events;
-    private static boolean isSwitching = false;
+    private static boolean isSwitching = true;
     private static int publishingRate = 6000;
     private static int publicCloudPublishBatchSize = 40000;
 
@@ -90,7 +91,7 @@ public class ResearchEventPublisher implements WrapperListener {
     private static void initVmManager(){
         List<VMConfig> vmConfigList = new ArrayList<>();
 
-//        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 4 * 1000,  6 * 1000, 2 * 1000));
+        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 22 * 1000,  24 * 1000, 2 * 1000));
 //        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000)); - 40000 tps support and good percent to public VM
 //        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.134", 10, 10, 10));
         //vmConfigList.add(new VMConfig(2, 7611, "192.168.57.81", 20 * 1000,  22 * 1000, 10 * 1000));
@@ -409,6 +410,19 @@ public class ResearchEventPublisher implements WrapperListener {
     }
 
     public static void sendThroughPrivatePublisher(Event event) {
-        currentDataPublisher.publish(event);
+        if(vm1DataPublisher == null) {
+            try {
+                vm1DataPublisher = generateDataPublisher(1);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        vm1DataPublisher.publish(event);
+    }
+
+    private static DataPublisher generateDataPublisher(int vmId) throws Exception {
+        VMConfig vmConfig = vmManager.getVmConfig(vmId);
+        return new DataPublisher(Configuration.getProperty("protocol"),
+                vmConfig.getThriftUrl(), null, ResearchEventPublisher.USER_NAME, ResearchEventPublisher.PASSWORD);
     }
 }

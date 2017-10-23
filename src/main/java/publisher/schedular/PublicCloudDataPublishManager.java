@@ -121,9 +121,4 @@ public class PublicCloudDataPublishManager implements DataPublishDecisionListene
         log.debug("Stopping sending data to VM[ID=" + vmId + "]");
     }
 
-    public static DataPublisher generateDataPublisher(int vmId) throws Exception {
-        VMConfig vmConfig = vmIdToConfigurations.get(vmId);
-        return new DataPublisher(Configuration.getProperty("protocol"),
-                vmConfig.getThriftUrl(), null, ResearchEventPublisher.USER_NAME, ResearchEventPublisher.PASSWORD);
-    }
 }
