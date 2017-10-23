@@ -45,7 +45,7 @@ public class EmailBenchmarkPublisher extends Publishable {
             public void run() {
                 try {
                     if(dataFileReader.hasNext()) {
-                        for(int i = 0;i < 1;i++) {
+                        for(int i = 0;i < 5;i++) {
                             readData(dataFileReader);
                         }
                     } else {
@@ -56,15 +56,15 @@ public class EmailBenchmarkPublisher extends Publishable {
                     t.printStackTrace();
                 }
             }
-        }, 2000, 20, TimeUnit.MILLISECONDS);
+        }, 2000, 10, TimeUnit.MILLISECONDS);
 
         ScheduledExecutorService scheduledExecutorServiceDataPublisher = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorServiceDataPublisher.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 try {
-                    int iterations = 1;
-                    int repeatCount = 1;
+                    int iterations = 5;
+                    int repeatCount = 60;
                     for(int i = 0;i < iterations;i++) {
                         EventWrapper event = eventQueue.poll();
                         if(event != null) {
@@ -81,7 +81,7 @@ public class EmailBenchmarkPublisher extends Publishable {
                 }
 
             }
-        }, 5000, 20, TimeUnit.MILLISECONDS);
+        }, 5000, 10, TimeUnit.MILLISECONDS);
 
         ScheduledExecutorService scheduledExecutorServiceDataRatePrinter = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorServiceDataRatePrinter.scheduleAtFixedRate(new Runnable() {

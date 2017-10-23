@@ -203,12 +203,12 @@ public class ResearchEventPublisher implements WrapperListener {
 //            if(isHeEventMode) {
 //                AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
 //            } else {
-//                Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-//                currentDataPublisher.publish(event);
+                Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+                currentDataPublisher.publish(event);
 
-            streamId = "inputHEEmailsStream:1.0.0";
-            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-            AsyncCompositeHeEventPublisher.addToQueue(event);
+//            streamId = "inputHEEmailsStream:1.0.0";
+//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+//            AsyncCompositeHeEventPublisher.addToQueue(event);
 
 //            AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
 
