@@ -30,13 +30,14 @@ public class AsyncCompositeHeEventPublisher {
     private static final int maxEmailLength = 40;
     private static final int compositeEventSize = 10;
 
+    private static AtomicLong totalPlainCount = new AtomicLong(0);
     private static AtomicLong totalEncryptedCount = new AtomicLong(0);
 
     public static void init() throws Exception {
         plainQueue = new ArrayBlockingQueue<>(10000000);
         encryptedQueue = new ArrayBlockingQueue<>(10000000);
 
-        encryptWorkers = Executors.newFixedThreadPool(20);
+        encryptWorkers = Executors.newFixedThreadPool(50);
 
         encryptBossScheduler = Executors.newSingleThreadExecutor();
         encryptBossScheduler.submit(() -> {
@@ -53,7 +54,7 @@ public class AsyncCompositeHeEventPublisher {
                             totalEncryptedCount.addAndGet(compositeEventSize);
                         });
                     } else {
-                        Thread.sleep(50);
+                        Thread.sleep(5);
                     }
                 }
             } catch (Throwable th) {
@@ -93,13 +94,14 @@ public class AsyncCompositeHeEventPublisher {
 
         logExecutorService = Executors.newSingleThreadScheduledExecutor();
         logExecutorService.scheduleAtFixedRate(() -> {
-                log.info("Plain queue size [" + plainQueue.size() + "], Encrypted queue size [" + encryptedQueue.size() + "], Total Encrypted count [" + totalEncryptedCount.get() + "]");
+                log.info("Plain queue size [" + plainQueue.size() + "], Total Plain Count [" + totalPlainCount.get() + "], Encrypted queue size [" + encryptedQueue.size() + "], Total Encrypted count [" + totalEncryptedCount.get() + "]");
         }, 5000, 5000, TimeUnit.MILLISECONDS);
 
     }
 
     public static void addToQueue(Event event) {
         plainQueue.add(event);
+        totalPlainCount.incrementAndGet();
     }
 
     public static Event createCompositeEvent(List<Event> events){
