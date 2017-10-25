@@ -134,11 +134,16 @@ public class AsyncCompositeHeEventPublisher {
         }
 
         Object[] modifiedPayload = new Object[8];
-        modifiedPayload[0] = field1Builder.toString().replaceAll(FIELD_SEPARATOR + "$", "");
-        modifiedPayload[4] = field5Builder.toString().replaceAll(FIELD_SEPARATOR + "$", "");
-        modifiedPayload[5] = field6Builder.toString().replaceAll(FIELD_SEPARATOR + "$", "");
-        modifiedPayload[6] = field7Builder.toString().replaceAll(FIELD_SEPARATOR + "$", "");
-        modifiedPayload[7] = field8Builder.toString().replaceAll(FIELD_SEPARATOR + "$", "");
+        String field1Str = field1Builder.toString();
+        modifiedPayload[0] = field1Str.substring(0, field1Str.length() - 3);
+        String field5Str = field5Builder.toString();
+        modifiedPayload[4] = field5Str.substring(0, field5Str.length() - 3);
+        String field6Str = field6Builder.toString();
+        modifiedPayload[5] = field6Str.substring(0, field6Str.length() - 3);
+        String field7Str = field7Builder.toString();
+        modifiedPayload[6] = field7Str.substring(0, field7Str.length() - 3);
+        String field8Str = field8Builder.toString();
+        modifiedPayload[7] = field8Str.substring(0, field8Str.length() - 3);
 
         int remainingSlots = batchSize - (compositeEventSize * maxEmailLength);
         for(int i = 0; i < remainingSlots; i++) {
@@ -150,15 +155,18 @@ public class AsyncCompositeHeEventPublisher {
             field4Builder.append(",");
         }
 
-        String field2 = field2Builder.toString().replaceAll(",$", "");
+        String field2Str = field2Builder.toString();
+        String field2 = field2Str.substring(0, field2Str.length() - 1);
         String encryptedField2 = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(field2);
         modifiedPayload[1] = encryptedField2;
 
-        String field3 = field3Builder.toString().replaceAll(",$", "");
+        String field3Str = field3Builder.toString();
+        String field3 = field3Str.substring(0, field3Str.length() - 1);
         String encryptedField3 = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(field3);
         modifiedPayload[2] = encryptedField3;
 
-        String field4 = field4Builder.toString().replaceAll(",$", "");
+        String field4Str = field4Builder.toString();
+        String field4 = field4Str.substring(0, field4Str.length() - 1);
         String encryptedField4 = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(field4);
         modifiedPayload[3] = encryptedField4;
 
@@ -178,7 +186,8 @@ public class AsyncCompositeHeEventPublisher {
             valueBuilder.append(0);
             valueBuilder.append(",");
         }
-        String valueList = valueBuilder.toString().replaceAll(",$", "");
+        String valueStr = valueBuilder.toString();
+        String valueList = valueStr.substring(0, valueStr.length() - 1);
         return valueList;
     }
 
