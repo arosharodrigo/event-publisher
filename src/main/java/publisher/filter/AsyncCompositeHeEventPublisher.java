@@ -24,6 +24,7 @@ public class AsyncCompositeHeEventPublisher {
     private static ExecutorService encryptWorkers;
     private static ExecutorService encryptBossScheduler;
     private static ScheduledExecutorService encryptedEventsPublishExecutorService;
+    private static ExecutorService encryptedEventsPublishScheduler;
 
     private static ScheduledExecutorService logExecutorService;
     private static final int batchSize = 478;
@@ -62,7 +63,7 @@ public class AsyncCompositeHeEventPublisher {
             }
         });
 
-        encryptedEventsPublishExecutorService = Executors.newSingleThreadScheduledExecutor();
+        /*encryptedEventsPublishExecutorService = Executors.newSingleThreadScheduledExecutor();
         encryptedEventsPublishExecutorService.scheduleAtFixedRate(() -> {
                 try {
                     int encryptedQueueSize = encryptedQueue.size();
@@ -90,7 +91,41 @@ public class AsyncCompositeHeEventPublisher {
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
-        }, 5000, 10, TimeUnit.MILLISECONDS);
+        }, 5000, 10, TimeUnit.MILLISECONDS);*/
+
+        encryptBossScheduler = Executors.newSingleThreadExecutor();
+        encryptBossScheduler.submit(() -> {
+            try {
+//                int q = 0;
+//                int p = 0;
+                while(true) {
+                    long startTime = System.currentTimeMillis();
+                    int encryptedQueueSize = encryptedQueue.size();
+                    for (int j = 0; j < encryptedQueueSize; j++) {
+                        long time = System.currentTimeMillis();
+                        if (time - startTime <= 8000) {
+                            Event event = encryptedQueue.poll();
+                            ResearchEventPublisher.sendThroughPrivatePublisher(event);
+//                            p++;
+//                            q++;
+                        } else {
+
+                        }
+                    }
+//                    log.info("p is" + p);
+//                    p = 0;
+                    long currentTime = System.currentTimeMillis();
+
+//                    log.info("q is" + q);
+
+                    if (currentTime - startTime <= 10000) {
+                        Thread.sleep(10000 - (currentTime - startTime));
+                    }
+                }
+            } catch (Throwable th) {
+                log.error("Error occurred in encrypting thread", th);
+            }
+        });
 
         logExecutorService = Executors.newSingleThreadScheduledExecutor();
         logExecutorService.scheduleAtFixedRate(() -> {

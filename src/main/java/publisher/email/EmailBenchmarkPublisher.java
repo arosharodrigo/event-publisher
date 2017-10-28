@@ -64,7 +64,7 @@ public class EmailBenchmarkPublisher extends Publishable {
             public void run() {
                 try {
                     int iterations = 5;
-                    int repeatCount = 50;
+                    int repeatCount = 80;
                     for(int i = 0;i < iterations;i++) {
                         EventWrapper event = eventQueue.poll();
                         if(event != null) {
