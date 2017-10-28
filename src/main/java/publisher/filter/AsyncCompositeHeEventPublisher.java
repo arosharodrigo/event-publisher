@@ -93,11 +93,9 @@ public class AsyncCompositeHeEventPublisher {
                 }
         }, 5000, 10, TimeUnit.MILLISECONDS);*/
 
-        encryptBossScheduler = Executors.newSingleThreadExecutor();
-        encryptBossScheduler.submit(() -> {
+        encryptedEventsPublishScheduler = Executors.newSingleThreadExecutor();
+        encryptedEventsPublishScheduler.submit(() -> {
             try {
-//                int q = 0;
-//                int p = 0;
                 while(true) {
                     long startTime = System.currentTimeMillis();
                     int encryptedQueueSize = encryptedQueue.size();
@@ -106,18 +104,11 @@ public class AsyncCompositeHeEventPublisher {
                         if (time - startTime <= 8000) {
                             Event event = encryptedQueue.poll();
                             ResearchEventPublisher.sendThroughPrivatePublisher(event);
-//                            p++;
-//                            q++;
                         } else {
 
                         }
                     }
-//                    log.info("p is" + p);
-//                    p = 0;
                     long currentTime = System.currentTimeMillis();
-
-//                    log.info("q is" + q);
-
                     if (currentTime - startTime <= 10000) {
                         Thread.sleep(10000 - (currentTime - startTime));
                     }
