@@ -24,7 +24,8 @@ public class AsyncCompositeHeEventPublisher {
     private static ExecutorService encryptWorkers;
     private static ExecutorService encryptBossScheduler;
     private static ScheduledExecutorService encryptedEventsPublishExecutorService;
-    private static ExecutorService encryptedEventsPublishScheduler;
+
+//    private static ExecutorService encryptedEventsPublishScheduler;
 
     private static ScheduledExecutorService logExecutorService;
     private static final int batchSize = 478;
@@ -63,37 +64,24 @@ public class AsyncCompositeHeEventPublisher {
             }
         });
 
-        /*encryptedEventsPublishExecutorService = Executors.newSingleThreadScheduledExecutor();
+        encryptedEventsPublishExecutorService = Executors.newSingleThreadScheduledExecutor();
         encryptedEventsPublishExecutorService.scheduleAtFixedRate(() -> {
                 try {
                     int encryptedQueueSize = encryptedQueue.size();
                     if(encryptedQueueSize > 0) {
-//                        if(dataPublisher == null) {
-//                            dataPublisher = PublicCloudDataPublishManager.generateDataPublisher(1);
-//                        }
                         for(int i=0; i < encryptedQueueSize; i++) {
                             Event event = encryptedQueue.poll();
-//                            dataPublisher.tryPublish(event);
                             ResearchEventPublisher.sendThroughPrivatePublisher(event);
-//                            log.info("Composite event [" +
-//                                    event.getPayloadData()[0] + "," +
-//                                    event.getPayloadData()[1] + "," +
-//                                    event.getPayloadData()[2] + "," +
-//                                    event.getPayloadData()[3] + "," +
-//                                    event.getPayloadData()[4] + "," +
-//                                    event.getPayloadData()[5] + "," +
-//                                    event.getPayloadData()[6] + "," +
-//                                    event.getPayloadData()[7] + "]");
                         }
                     } else {
-//                        System.out.println("");
+                        // Nothing to do
                     }
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
-        }, 5000, 10, TimeUnit.MILLISECONDS);*/
+        }, 5000, 10, TimeUnit.MILLISECONDS);
 
-        encryptedEventsPublishScheduler = Executors.newSingleThreadExecutor();
+        /*encryptedEventsPublishScheduler = Executors.newSingleThreadExecutor();
         encryptedEventsPublishScheduler.submit(() -> {
             try {
                 while(true) {
@@ -116,7 +104,7 @@ public class AsyncCompositeHeEventPublisher {
             } catch (Throwable th) {
                 log.error("Error occurred in encrypting thread", th);
             }
-        });
+        });*/
 
         logExecutorService = Executors.newSingleThreadScheduledExecutor();
         logExecutorService.scheduleAtFixedRate(() -> {
