@@ -52,9 +52,13 @@ public class AsyncCompositeHeEventPublisher {
                             events.add(plainQueue.poll());
                         }
                         encryptWorkers.submit(() -> {
-                            Event encryptedEvent = createCompositeEvent(events);
-                            encryptedQueue.add(encryptedEvent);
-                            totalEncryptedCount.addAndGet(compositeEventSize);
+                            try {
+                                Event encryptedEvent = createCompositeEvent(events);
+                                encryptedQueue.add(encryptedEvent);
+                                totalEncryptedCount.addAndGet(compositeEventSize);
+                            } catch (Exception th) {
+                                log.error("Error occurred in encrypt worker thread", th);
+                            }
                         });
                     } else {
                         Thread.sleep(5);
@@ -127,14 +131,12 @@ public class AsyncCompositeHeEventPublisher {
         StringBuilder field5Builder = new StringBuilder();
         StringBuilder field6Builder = new StringBuilder();
         StringBuilder field7Builder = new StringBuilder();
-        StringBuilder field8Builder = new StringBuilder();
         for(Event event : events) {
             Object[] payloadData = event.getPayloadData();
             field1Builder.append(payloadData[0]).append(FIELD_SEPARATOR);
             field5Builder.append(payloadData[4]).append(FIELD_SEPARATOR);
             field6Builder.append(payloadData[5]).append(FIELD_SEPARATOR);
             field7Builder.append(payloadData[6]).append(FIELD_SEPARATOR);
-            field8Builder.append(payloadData[7]).append(FIELD_SEPARATOR);
 
             String from = (String)payloadData[1];
             field2Builder.append(convertToBinaryForm(from, maxEmailLength)).append(COMMA_SEPARATOR);
@@ -148,7 +150,7 @@ public class AsyncCompositeHeEventPublisher {
             field4Builder.append(convertToBinaryForm(ccArr[0], maxEmailLength)).append(COMMA_SEPARATOR);
         }
 
-        Object[] modifiedPayload = new Object[8];
+        Object[] modifiedPayload = new Object[7];
         String field1Str = field1Builder.toString();
         modifiedPayload[0] = field1Str.substring(0, field1Str.length() - 3);
         String field5Str = field5Builder.toString();
@@ -157,8 +159,6 @@ public class AsyncCompositeHeEventPublisher {
         modifiedPayload[5] = field6Str.substring(0, field6Str.length() - 3);
         String field7Str = field7Builder.toString();
         modifiedPayload[6] = field7Str.substring(0, field7Str.length() - 3);
-        String field8Str = field8Builder.toString();
-        modifiedPayload[7] = field8Str.substring(0, field8Str.length() - 3);
 
         int remainingSlots = batchSize - (compositeEventSize * maxEmailLength);
         for(int i = 0; i < remainingSlots; i++) {

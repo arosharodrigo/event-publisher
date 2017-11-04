@@ -71,9 +71,9 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int totalSentToPublicCloud;
 
     private static int eventPercentageToBeSentToPublicCloud = 0;
-    private static int maxEventPercentageToBeSentToPublicCloud = 2;
+    private static int maxEventPercentageToBeSentToPublicCloud = 1;
 
-    private static int publicCloudPublishingRatioPerVm = 2; // Tells how much events to be published to public cloud for every 1000 events;
+    private static int publicCloudPublishingRatioPerVm = 1; // Tells how much events to be published to public cloud for every 1000 events;
     private static boolean isSwitching = true;
     private static int publishingRate = 6000;
     private static int publicCloudPublishBatchSize = 40000;
@@ -195,7 +195,7 @@ public class ResearchEventPublisher implements WrapperListener {
     public static void publishEvent(Object[] eventPayload, String streamId) throws InterruptedException {
 
         if (sendToPublicCloud && (currentDataPublisher == privateDataPublisher)){
-            if (count % (100 - eventPercentageToBeSentToPublicCloud) == 0){
+            if (count % (66 - eventPercentageToBeSentToPublicCloud) == 0){
                 currentDataPublisher = null; //setting to null for it to be picked interchangeably when  sending event in line # 162
             }
         }

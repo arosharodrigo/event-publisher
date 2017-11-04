@@ -60,7 +60,7 @@ public class EmailBenchmarkPublisher extends Publishable {
         emailDataPublisherScheduler.scheduleAtFixedRate(() -> {
                 try {
                     int iterations = 5;
-                    int repeatCount = 80;
+                    int repeatCount = 90;
                     for(int i = 0;i < iterations;i++) {
                         EventWrapper event = eventQueue.poll();
                         if(event != null) {
@@ -96,7 +96,7 @@ public class EmailBenchmarkPublisher extends Publishable {
         String subject;
         String body;
         String from;
-        int messageSize = (new String("(.*)@enron.com").getBytes("UTF-8").length) + 4;
+        int messageSize = 8;
 
         email = dataFileReader.next();
 
@@ -104,15 +104,8 @@ public class EmailBenchmarkPublisher extends Publishable {
         StringBuilder sb = new StringBuilder();
 
         final List<CharSequence> to = email.getTo();
-        if(to != null) {
-            itr = to.iterator();
-
-            while (itr.hasNext()) {
-                sb.append(itr.next());
-                if(itr.hasNext()){
-                    sb.append(",");
-                }
-            }
+        if(to != null && !to.isEmpty()) {
+            sb.append(to.get(0));
         }
 
         toAddresses = new String(sb.toString().getBytes("ISO-8859-1"),"UTF-8");
@@ -120,15 +113,8 @@ public class EmailBenchmarkPublisher extends Publishable {
         sb = new StringBuilder();
 
         final List<CharSequence> cc = email.getCc();
-        if(cc != null) {
-            itr = cc.iterator();
-
-            while (itr.hasNext()) {
-                sb.append(itr.next());
-                if(itr.hasNext()){
-                    sb.append(",");
-                }
-            }
+        if(cc != null && !cc.isEmpty()) {
+            sb.append(cc.get(0));
         }
 
         ccAddresses = new String(sb.toString().getBytes("ISO-8859-1"),"UTF-8");
@@ -136,15 +122,8 @@ public class EmailBenchmarkPublisher extends Publishable {
         sb = new StringBuilder();
 
         final List<CharSequence> bcc = email.getBcc();
-        if(bcc != null) {
-            itr = bcc.iterator();
-
-            while (itr.hasNext()) {
-                sb.append(itr.next());
-                if(itr.hasNext()){
-                    sb.append(",");
-                }
-            }
+        if(bcc != null && !bcc.isEmpty()) {
+            sb.append(bcc.get(0));
         }
 
         bccAddresses = new String(sb.toString().getBytes("ISO-8859-1"),"UTF-8");
@@ -159,8 +138,6 @@ public class EmailBenchmarkPublisher extends Publishable {
         from = new String(email.getFrom().toString().getBytes("ISO-8859-1"), "UTF-8");
         messageSize += from.getBytes().length;
 
-        messageSize -= 7;
-
-        eventQueue.add(new EventWrapper(new Object[]{System.currentTimeMillis(), from, toAddresses, ccAddresses, bccAddresses, subject, body, "(.*)@enron.com"}, messageSize));
+        eventQueue.add(new EventWrapper(new Object[]{System.currentTimeMillis(), from, toAddresses, ccAddresses, bccAddresses, subject, body}, messageSize));
     }
 }
