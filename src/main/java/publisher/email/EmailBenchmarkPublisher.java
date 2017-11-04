@@ -1,5 +1,6 @@
 package publisher.email;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.uebercomputing.mailrecord.MailRecord;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.io.DatumReader;
@@ -39,10 +40,8 @@ public class EmailBenchmarkPublisher extends Publishable {
         DatumReader<MailRecord> userDatumReader = new SpecificDatumReader<>(MailRecord.class);
         final DataFileReader<MailRecord> dataFileReader = new DataFileReader<>(new File(getDataFilePath()), userDatumReader);
 
-        ScheduledExecutorService scheduledExecutorServiceDataConsumer = Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutorServiceDataConsumer.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
+        ScheduledExecutorService emailDataProducerScheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Email-Data-Producer").build());
+        emailDataProducerScheduler.scheduleAtFixedRate(() -> {
                 try {
                     if(dataFileReader.hasNext()) {
                         for(int i = 0;i < 5;i++) {
@@ -55,13 +54,10 @@ public class EmailBenchmarkPublisher extends Publishable {
                     System.out.println("Error while reading Email data - " + t);
                     t.printStackTrace();
                 }
-            }
         }, 2000, 10, TimeUnit.MILLISECONDS);
 
-        ScheduledExecutorService scheduledExecutorServiceDataPublisher = Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutorServiceDataPublisher.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
+        ScheduledExecutorService emailDataPublisherScheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Email-Data-Publisher").build());
+        emailDataPublisherScheduler.scheduleAtFixedRate(() -> {
                 try {
                     int iterations = 5;
                     int repeatCount = 80;
@@ -79,21 +75,16 @@ public class EmailBenchmarkPublisher extends Publishable {
                     System.out.println("Error 6 - " + t);
                     t.printStackTrace();
                 }
-
-            }
         }, 5000, 10, TimeUnit.MILLISECONDS);
 
-        ScheduledExecutorService scheduledExecutorServiceDataRatePrinter = Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutorServiceDataRatePrinter.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
+        ScheduledExecutorService emailDataRatePrinter = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Email-Data-Rate-Printer").build());
+        emailDataRatePrinter.scheduleAtFixedRate(() -> {
                 try {
                     long currentMessageSize = messageSize.getAndSet(0);
                     log.info("Input data rate: [" + (currentMessageSize/1024) + "]KB per second");
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
-            }
         }, 5000, 1000, TimeUnit.MILLISECONDS);
     }
 

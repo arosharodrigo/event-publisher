@@ -1,5 +1,6 @@
 package publisher.filter;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.databridge.commons.Event;
@@ -23,11 +24,11 @@ public class AsyncCompositeHeEventPublisher {
 
     private static ExecutorService encryptWorkers;
     private static ExecutorService encryptBossScheduler;
-    private static ScheduledExecutorService encryptedEventsPublishExecutorService;
+    private static ScheduledExecutorService encryptedEventsPublisher;
 
 //    private static ExecutorService encryptedEventsPublishScheduler;
 
-    private static ScheduledExecutorService logExecutorService;
+    private static ScheduledExecutorService eventCountPrinter;
     private static final int batchSize = 478;
     private static final int maxEmailLength = 40;
     private static final int compositeEventSize = 10;
@@ -39,9 +40,9 @@ public class AsyncCompositeHeEventPublisher {
         plainQueue = new ArrayBlockingQueue<>(10000000);
         encryptedQueue = new ArrayBlockingQueue<>(10000000);
 
-        encryptWorkers = Executors.newFixedThreadPool(50);
+        encryptWorkers = Executors.newFixedThreadPool(20, new ThreadFactoryBuilder().setNameFormat("Composite-Event-Encode-Workers").build());
 
-        encryptBossScheduler = Executors.newSingleThreadExecutor();
+        encryptBossScheduler = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Encrypt-Boss").build());
         encryptBossScheduler.submit(() -> {
             try {
                 while(true) {
@@ -64,8 +65,8 @@ public class AsyncCompositeHeEventPublisher {
             }
         });
 
-        encryptedEventsPublishExecutorService = Executors.newSingleThreadScheduledExecutor();
-        encryptedEventsPublishExecutorService.scheduleAtFixedRate(() -> {
+        encryptedEventsPublisher = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Encrypted-Events-Publisher").build());
+        encryptedEventsPublisher.scheduleAtFixedRate(() -> {
                 try {
                     int encryptedQueueSize = encryptedQueue.size();
                     if(encryptedQueueSize > 0) {
@@ -106,8 +107,8 @@ public class AsyncCompositeHeEventPublisher {
             }
         });*/
 
-        logExecutorService = Executors.newSingleThreadScheduledExecutor();
-        logExecutorService.scheduleAtFixedRate(() -> {
+        eventCountPrinter = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Event-Count-Printer").build());
+        eventCountPrinter.scheduleAtFixedRate(() -> {
                 log.info("Plain queue size [" + plainQueue.size() + "], Total Plain Count [" + totalPlainCount.get() + "], Encrypted queue size [" + encryptedQueue.size() + "], Total Encrypted count [" + totalEncryptedCount.get() + "]");
         }, 5000, 5000, TimeUnit.MILLISECONDS);
 
