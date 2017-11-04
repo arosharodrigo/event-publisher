@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import publisher.schedular.DataPublishDecisionListener;
+import publisher.schedular.util.LatencyWrapper;
 import publisher.schedular.util.StatisticsInputReaderTask;
 import publisher.schedular.util.StatisticsListener;
 
@@ -13,9 +14,9 @@ import java.util.Timer;
  * Created by sajith on 8/21/16.
  */
 public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
-    private static final long POLLING_INTERVAL = 10000l;
-    private static final long EVALUATE_INTERVAL = 11000l;
-    private static final long GRACE_PERIOD = 5 * 1000l;
+    private static final long POLLING_INTERVAL = 2000l;
+    private static final long EVALUATE_INTERVAL = 4000l;
+    private static final long GRACE_PERIOD = 1 * 1000l;
 
     private static Log log = LogFactory.getLog(DataPublishDecisionTaker.class);
     Timer inputReaderTaskTimer = new Timer();
@@ -25,6 +26,10 @@ public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
     private long dataPublishThresholdLatency;
     private int vmId;
     DataPublishDecisionListener listener;
+
+    private LatencyWrapper previousLatencyWrapper;
+    private LatencyWrapper currentLatencyWrapper;
+    private int latencyWeight = 12000;
 
     public DataPublishDecisionTaker(int vmId, long dataPublishThresholdLatency, DataPublishDecisionListener listener){
         this.dataPublishThresholdLatency = dataPublishThresholdLatency;
@@ -48,6 +53,8 @@ public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
     public void onStatisticsRead(long elapsedTime, double latency, double throughput) {
         currentElapsedTime = elapsedTime;
         currentLatency.set(latency);
+        previousLatencyWrapper = currentLatencyWrapper;
+        currentLatencyWrapper = new LatencyWrapper(System.currentTimeMillis(), latency);
     }
 
     @Override
@@ -76,7 +83,18 @@ public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
 
     public boolean shouldPublishToPublicCloud(){
         double latency  = currentLatency.get();
-        if (latency > dataPublishThresholdLatency){
+        boolean shouldPublishToPublicCloud;
+        if(previousLatencyWrapper != null && currentLatencyWrapper != null) {
+            long dx = currentLatencyWrapper.getTime() - previousLatencyWrapper.getTime();
+            double dy = currentLatencyWrapper.getLatency() - previousLatencyWrapper.getLatency();
+            double dyDx = dy / dx;
+            double dynamicThreshold = dataPublishThresholdLatency - (latencyWeight * dyDx);
+            shouldPublishToPublicCloud = latency > dynamicThreshold;
+        } else {
+            shouldPublishToPublicCloud = latency > dataPublishThresholdLatency;
+        }
+
+        if (shouldPublishToPublicCloud){
             log.info("Latency greater than threshold latency. Send data to PUBLIC cloud[ID=" + vmId + ", CurrentLatency="
                     + latency + ", ThresholdLatency=" + dataPublishThresholdLatency + ", ElapsedTime=" + currentElapsedTime +"]");
             return true;
