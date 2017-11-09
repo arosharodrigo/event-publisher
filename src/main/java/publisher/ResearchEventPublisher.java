@@ -26,6 +26,7 @@ import org.wso2.carbon.databridge.agent.AgentHolder;
 import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.databridge.commons.Event;
 import org.wso2.siddhi.extension.he.api.HomomorphicEncDecService;
+import publisher.edgar.EdgarBenchmarkPublisher;
 import publisher.email.EmailBenchmarkPublisher;
 import publisher.filter.AsyncCompositeHeEventPublisher;
 import publisher.filter.FilterBenchmarkPublisher;
@@ -74,12 +75,13 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int maxEventPercentageToBeSentToPublicCloud = 1;
 
     private static int publicCloudPublishingRatioPerVm = 1; // Tells how much events to be published to public cloud for every 1000 events;
-    private static boolean isSwitching = true;
+    private static boolean isSwitching = false;
     private static int publishingRate = 6000;
     private static int publicCloudPublishBatchSize = 40000;
 
 //    public static FilterBenchmarkPublisher publisher;
-    public static EmailBenchmarkPublisher publisher;
+//    public static EmailBenchmarkPublisher publisher;
+    public static EdgarBenchmarkPublisher publisher;
     public static HomomorphicEncDecService homomorphicEncDecService;
 
     private static final int batchSize = 478;
@@ -383,7 +385,8 @@ public class ResearchEventPublisher implements WrapperListener {
 //            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
 //            publisher.startPublishing();
 
-            publisher = new EmailBenchmarkPublisher();
+//            publisher = new EmailBenchmarkPublisher();
+            publisher = new EdgarBenchmarkPublisher();
             publisher.startPublishing();
 
             //Publishable debs2016Query1Publisher = new Debs2016Query1Publisher();
