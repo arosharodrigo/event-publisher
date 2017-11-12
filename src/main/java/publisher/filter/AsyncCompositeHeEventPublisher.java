@@ -142,12 +142,10 @@ public class AsyncCompositeHeEventPublisher {
             field2Builder.append(convertToBinaryForm(from, maxEmailLength)).append(COMMA_SEPARATOR);
 
             String to = (String)payloadData[2];
-            String[] toArr = to.split(",");
-            field3Builder.append(convertToBinaryForm(toArr[0], maxEmailLength)).append(COMMA_SEPARATOR);
+            field3Builder.append(convertToBinaryForm(to, maxEmailLength)).append(COMMA_SEPARATOR);
 
             String cc = (String)payloadData[3];
-            String[] ccArr = cc.split(",");
-            field4Builder.append(convertToBinaryForm(ccArr[0], maxEmailLength)).append(COMMA_SEPARATOR);
+            field4Builder.append(convertToBinaryForm(cc, maxEmailLength)).append(COMMA_SEPARATOR);
         }
 
         Object[] modifiedPayload = new Object[7];
