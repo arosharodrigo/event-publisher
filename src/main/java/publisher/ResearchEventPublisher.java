@@ -26,6 +26,7 @@ import org.wso2.carbon.databridge.agent.AgentHolder;
 import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.databridge.commons.Event;
 import org.wso2.siddhi.extension.he.api.HomomorphicEncDecService;
+import publisher.edgar.AsyncEdgarCompositeHeEventPublisher;
 import publisher.edgar.EdgarBenchmarkPublisher;
 import publisher.email.EmailBenchmarkPublisher;
 import publisher.filter.AsyncCompositeHeEventPublisher;
@@ -75,7 +76,7 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int maxEventPercentageToBeSentToPublicCloud = 1;
 
     private static int publicCloudPublishingRatioPerVm = 1; // Tells how much events to be published to public cloud for every 1000 events;
-    private static boolean isSwitching = false;
+    private static boolean isSwitching = true;
     private static int publishingRate = 6000;
     private static int publicCloudPublishBatchSize = 40000;
 
@@ -243,9 +244,14 @@ public class ResearchEventPublisher implements WrapperListener {
 //            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
 //            currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
 //            currentDataPublisher.tryPublish(event);
-            streamId = "inputHEEmailsStream:1.0.0";
+
+//            streamId = "inputHEEmailsStream:1.0.0";
+//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+//            AsyncCompositeHeEventPublisher.addToQueue(event);
+
+            streamId = "inputHEEdgarStream:1.0.0";
             Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-            AsyncCompositeHeEventPublisher.addToQueue(event);
+            AsyncEdgarCompositeHeEventPublisher.addToQueue(event);
         }
 
         if (currentDataPublisher != privateDataPublisher){
@@ -263,7 +269,7 @@ public class ResearchEventPublisher implements WrapperListener {
             log.info("Done Sending " + (float)count/1000000.0  + " M Events[TotalSentToPublicCloud=" + totalSentToPublicCloud + ", PublicCloudSendingRatio=" + eventPercentageToBeSentToPublicCloud + "]");
         }
 
-        if (count == 100000000){
+        if (count == 150000000){
             System.exit(0);
         }
     }
@@ -380,7 +386,8 @@ public class ResearchEventPublisher implements WrapperListener {
                 initVmManager();
                 vmManager.start();
             }
-            AsyncCompositeHeEventPublisher.init();
+//            AsyncCompositeHeEventPublisher.init();
+            AsyncEdgarCompositeHeEventPublisher.init();
 
 //            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
 //            publisher.startPublishing();

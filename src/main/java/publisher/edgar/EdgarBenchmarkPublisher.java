@@ -9,6 +9,7 @@ import publisher.Publishable;
 import publisher.ResearchEventPublisher;
 import publisher.email.EventWrapper;
 import publisher.util.Configuration;
+import publisher.util.EdgarUtil;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -19,6 +20,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class EdgarBenchmarkPublisher extends Publishable {
@@ -27,6 +29,7 @@ public class EdgarBenchmarkPublisher extends Publishable {
 
     private Queue<EventWrapper> eventQueue = new ArrayBlockingQueue<>(1000000);
     private AtomicLong messageSize = new AtomicLong(0);
+    private AtomicInteger dataPublisherCounter = new AtomicInteger(0);
 
     public EdgarBenchmarkPublisher() {
         super("inputEdgarStream:1.0.0", Configuration.getProperty("data.path.edgar"));
@@ -41,7 +44,7 @@ public class EdgarBenchmarkPublisher extends Publishable {
         ScheduledExecutorService dataProducerScheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Edgar-Data-Producer").build());
         dataProducerScheduler.scheduleAtFixedRate(() -> {
             try {
-                for(int i = 0;i < 20000;i++) {
+                for(int i = 0;i < 5;i++) {
                     if(recordsIterator.hasNext()) {
                         EventWrapper event = createRecord(recordsIterator.next());
                         eventQueue.add(event);
@@ -58,8 +61,9 @@ public class EdgarBenchmarkPublisher extends Publishable {
         ScheduledExecutorService edgarDataPublisherScheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Edgar-Data-Publisher").build());
         edgarDataPublisherScheduler.scheduleAtFixedRate(() -> {
             try {
-                int iterations = 20000;
-                int repeatCount = 1;
+                int iterations = 5;
+                int repeatCount = 300;
+                repeatCount = EdgarUtil.generateTps(dataPublisherCounter.getAndIncrement());
                 for(int i = 0;i < iterations;i++) {
                     EventWrapper event = eventQueue.poll();
                     if(event != null) {
