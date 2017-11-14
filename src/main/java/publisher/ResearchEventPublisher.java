@@ -249,9 +249,14 @@ public class ResearchEventPublisher implements WrapperListener {
 //            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
 //            AsyncCompositeHeEventPublisher.addToQueue(event);
 
+            String previousStreamId = streamId;
             streamId = "inputHEEdgarStream:1.0.0";
             Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
             AsyncEdgarCompositeHeEventPublisher.addToQueue(event);
+            if(!AsyncEdgarCompositeHeEventPublisher.addToQueue(event)) {
+                event = new Event(previousStreamId, System.currentTimeMillis(), null, null, eventPayload);
+                privateDataPublisher.publish(event);
+            }
         }
 
         if (currentDataPublisher != privateDataPublisher){

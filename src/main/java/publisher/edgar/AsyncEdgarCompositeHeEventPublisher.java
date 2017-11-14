@@ -29,9 +29,13 @@ public class AsyncEdgarCompositeHeEventPublisher {
 
     private static ScheduledExecutorService eventCountPrinter;
 
+    private static ScheduledExecutorService heEventLimiter;
+    private static AtomicLong heEventsReceivedForPeriod = new AtomicLong(0);
+    private static final int maxHeEventsReceivedForPeriod = 500;
+
     private static final int batchSize = 478;
-    private static final int maxFieldLength = 40;
-    private static final int compositeEventSize = 10;
+    private static final int maxFieldLength = 20;
+    private static final int compositeEventSize = 23;
 
     private static AtomicLong totalPlainCount = new AtomicLong(0);
     private static AtomicLong totalEncryptedCount = new AtomicLong(0);
@@ -91,11 +95,22 @@ public class AsyncEdgarCompositeHeEventPublisher {
             log.info("Plain queue size [" + plainQueue.size() + "], Total Plain Count [" + totalPlainCount.get() + "], Encrypted queue size [" + encryptedQueue.size() + "], Total Encrypted count [" + totalEncryptedCount.get() + "]");
         }, 5000, 5000, TimeUnit.MILLISECONDS);
 
+        heEventLimiter = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Event-Count-Printer").build());
+        heEventLimiter.scheduleAtFixedRate(() -> {
+            heEventsReceivedForPeriod.set(0);
+        }, 1000, 1000, TimeUnit.MILLISECONDS);
+
     }
 
-    public static void addToQueue(Event event) {
-        plainQueue.add(event);
-        totalPlainCount.incrementAndGet();
+    public static boolean addToQueue(Event event) {
+        if(heEventsReceivedForPeriod.get() > maxHeEventsReceivedForPeriod) {
+            return false;
+        } else {
+            plainQueue.add(event);
+            totalPlainCount.incrementAndGet();
+            heEventsReceivedForPeriod.incrementAndGet();
+            return true;
+        }
     }
 
     public static Event createCompositeEvent(List<Event> events){
