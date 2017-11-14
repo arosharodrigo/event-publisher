@@ -9,6 +9,8 @@ public class EdgarUtil {
     public static int generateTps(long count) {
         if (count > 2000 && count <= 27000) {
             return generateTpsFirstSpike(count-1000);
+        } else if(count > 45000 && count <= 60000) {
+            return generateTpsSecondSpike(count-45000);
         } else if(count > 77500 && count <= 110000) {
             return generateTpsLastSpike(count-77500);
         } else {
@@ -54,9 +56,9 @@ public class EdgarUtil {
         } else if (count > 9500 && count <= 10000) {
             return 150;
         } else if (count > 10000 && count <= 11000) {
-            return handle1000Down(count, 10000);
+            return handle1000Up(count, 10000);
         } else if (count > 11000 && count <= 12000) {
-            return handle1000Down(count, 11000);
+            return handle1000Up(count, 11000);
         } else if (count > 12000 && count <= 13000) {
             return handle1000Down2(count, 12000);
         } else if (count > 13000 && count <= 14000) {
@@ -232,6 +234,63 @@ public class EdgarUtil {
             return 100;
         }
     }
+
+    //####################################################################### Second Spike ####################################################################################################################################
+
+    public static int generateTpsSecondSpike(long count) {
+        if (count > 0 && count <= 1000) {
+            return handle1000Up(count, 0);
+        } else if (count > 1000 && count <= 1200) {
+            return 300;
+        } else if (count > 1200 && count <= 1400) {
+            return 500;
+        } else if (count > 1400 && count <= 1500) {
+            return 100;
+        } else if (count > 1500 && count <= 2500) {
+            return handle1000Up(count, 1500);
+        } else if (count > 2500 && count <= 3500) {
+            return handle1000Up(count, 2500);
+        } else if (count > 3500 && count <= 3700) {
+            return 300;
+        } else if (count > 3700 && count <= 4200) {
+            return handle500Up(count, 3700);
+        } else if (count > 4200 && count <= 4300) {
+            return 100;
+        } else if (count > 4300 && count <= 4500) {
+            return 350;
+        } else if (count > 4500 && count <= 5000) {
+            return handle500Up(count, 4500);
+        } else if (count > 5000 && count <= 5250) {
+            return 100;
+        } else if (count > 5250 && count <= 5750) {
+            return EdgarUtil.generateRandomTps();
+        } else if (count > 5750 && count <= 6000) {
+            return 300;
+        } else if (count > 6000 && count <= 6500) {
+            return handle500Up(count, 6000);
+        } else if (count > 7000 && count <= 8000) {
+            return 150;
+        } else if (count > 8000 && count <= 9000) {
+            return handle1000Down(count, 8000);
+        } else if (count > 9000 && count <= 9500) {
+            return handle500Up(count, 9000);
+        } else if (count > 9500 && count <= 10000) {
+            return 150;
+        } else if (count > 10000 && count <= 11000) {
+            return handle1000Up(count, 10000);
+        } else if (count > 11000 && count <= 12000) {
+            return handle1000Up(count, 11000);
+        } else if (count > 12000 && count <= 13000) {
+            return handle1000Down2(count, 12000);
+        } else if (count > 13000 && count <= 14000) {
+            return handle1000Down2(count, 13000);
+        } else {
+            return 225;
+        }
+    }
+
+
+    //####################################################################### Last Spike ####################################################################################################################################
 
     public static int generateTpsLastSpike(long count) {
         if (count > 0 && count <= 1000) {
