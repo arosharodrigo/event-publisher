@@ -80,7 +80,7 @@ public class AsyncEdgarCompositeHeEventPublisher {
                 if(encryptedQueueSize > 0) {
                     for(int i=0; i < encryptedQueueSize; i++) {
                         Event event = encryptedQueue.poll();
-                        ResearchEventPublisher.sendThroughPrivatePublisher(event);
+                        ResearchEventPublisher.sendThroughVm1Publisher(event);
                     }
                 } else {
                     // Nothing to do

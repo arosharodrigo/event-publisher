@@ -76,7 +76,7 @@ public class AsyncCompositeHeEventPublisher {
                     if(encryptedQueueSize > 0) {
                         for(int i=0; i < encryptedQueueSize; i++) {
                             Event event = encryptedQueue.poll();
-                            ResearchEventPublisher.sendThroughPrivatePublisher(event);
+                            ResearchEventPublisher.sendThroughVm1Publisher(event);
                         }
                     } else {
                         // Nothing to do
@@ -96,7 +96,7 @@ public class AsyncCompositeHeEventPublisher {
                         long time = System.currentTimeMillis();
                         if (time - startTime <= 8000) {
                             Event event = encryptedQueue.poll();
-                            ResearchEventPublisher.sendThroughPrivatePublisher(event);
+                            ResearchEventPublisher.sendThroughVm1Publisher(event);
                         } else {
 
                         }

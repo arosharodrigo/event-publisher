@@ -94,8 +94,10 @@ public class ResearchEventPublisher implements WrapperListener {
     private static void initVmManager(){
         List<VMConfig> vmConfigList = new ArrayList<>();
 
-        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
+        // Email
 //        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000)); - 40000 tps support and good percent to public VM
+        // EDGAR
+        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 25 * 1000,  27 * 1000, 2 * 1000));
 //        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.134", 10, 10, 10));
         //vmConfigList.add(new VMConfig(2, 7611, "192.168.57.81", 20 * 1000,  22 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(3, 7611, "192.168.57.82", 30 * 1000,  32 * 1000, 10 * 1000));
@@ -252,7 +254,6 @@ public class ResearchEventPublisher implements WrapperListener {
             String previousStreamId = streamId;
             streamId = "inputHEEdgarStream:1.0.0";
             Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-            AsyncEdgarCompositeHeEventPublisher.addToQueue(event);
             if(!AsyncEdgarCompositeHeEventPublisher.addToQueue(event)) {
                 event = new Event(previousStreamId, System.currentTimeMillis(), null, null, eventPayload);
                 privateDataPublisher.publish(event);
@@ -424,7 +425,7 @@ public class ResearchEventPublisher implements WrapperListener {
 
     }
 
-    public static void sendThroughPrivatePublisher(Event event) {
+    public static void sendThroughVm1Publisher(Event event) {
         if(vm1DataPublisher == null) {
             try {
                 vm1DataPublisher = generateDataPublisher(1);
