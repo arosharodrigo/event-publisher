@@ -436,6 +436,11 @@ public class ResearchEventPublisher implements WrapperListener {
         vm1DataPublisher.publish(event);
     }
 
+    public static void sendThroughPrivatePublisher(Event event, String streamId) {
+        event = new Event(streamId, System.currentTimeMillis(), null, null, event.getPayloadData());
+        privateDataPublisher.publish(event);
+    }
+
     private static DataPublisher generateDataPublisher(int vmId) throws Exception {
         VMConfig vmConfig = vmManager.getVmConfig(vmId);
         return new DataPublisher(Configuration.getProperty("protocol"),

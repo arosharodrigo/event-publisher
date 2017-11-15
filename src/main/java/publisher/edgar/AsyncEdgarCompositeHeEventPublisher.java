@@ -31,7 +31,7 @@ public class AsyncEdgarCompositeHeEventPublisher {
 
     private static ScheduledExecutorService heEventLimiter;
     private static AtomicLong heEventsReceivedForPeriod = new AtomicLong(0);
-    private static final int maxHeEventsReceivedForPeriod = 500;
+    private static final int maxHeEventsReceivedForPeriod = 200;
 
     private static final int batchSize = 478;
     private static final int maxFieldLength = 20;
@@ -66,6 +66,11 @@ public class AsyncEdgarCompositeHeEventPublisher {
                         });
                     } else {
                         Thread.sleep(5);
+                        if(plainQueue.size() > 0 && heEventsReceivedForPeriod.get() == 0) {
+                            for(int i = 0; i < plainQueue.size(); i++) {
+                                ResearchEventPublisher.sendThroughPrivatePublisher(plainQueue.poll(), "inputEdgarStream:1.0.0");
+                            }
+                        }
                     }
                 }
             } catch (Throwable th) {
@@ -98,7 +103,7 @@ public class AsyncEdgarCompositeHeEventPublisher {
         heEventLimiter = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Event-Count-Printer").build());
         heEventLimiter.scheduleAtFixedRate(() -> {
             heEventsReceivedForPeriod.set(0);
-        }, 1000, 1000, TimeUnit.MILLISECONDS);
+        }, 1000, 100, TimeUnit.MILLISECONDS);
 
     }
 
