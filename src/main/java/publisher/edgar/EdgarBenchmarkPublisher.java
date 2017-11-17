@@ -10,16 +10,14 @@ import publisher.ResearchEventPublisher;
 import publisher.email.EventWrapper;
 import publisher.util.Configuration;
 import publisher.util.EdgarUtil;
+import publisher.util.EdgarUtil2;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -44,10 +42,12 @@ public class EdgarBenchmarkPublisher extends Publishable {
         ScheduledExecutorService dataProducerScheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Edgar-Data-Producer").build());
         dataProducerScheduler.scheduleAtFixedRate(() -> {
             try {
-                for(int i = 0;i < 5;i++) {
+                for(int i = 0;i < 500;i++) {//465
                     if(recordsIterator.hasNext()) {
-                        EventWrapper event = createRecord(recordsIterator.next());
-                        eventQueue.add(event);
+                        if(eventQueue.size() < 1000000) {
+                            EventWrapper event = createRecord(recordsIterator.next());
+                            eventQueue.add(event);
+                        }
                     } else {
                         log.info("No Edgar data to read, hope all are read");
                     }
@@ -58,7 +58,7 @@ public class EdgarBenchmarkPublisher extends Publishable {
             }
         }, 2000, 10, TimeUnit.MILLISECONDS);
 
-        ScheduledExecutorService edgarDataPublisherScheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Edgar-Data-Publisher").build());
+        /*ScheduledExecutorService edgarDataPublisherScheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Edgar-Data-Publisher").build());
         edgarDataPublisherScheduler.scheduleAtFixedRate(() -> {
             try {
                 int iterations = 5;
@@ -78,7 +78,31 @@ public class EdgarBenchmarkPublisher extends Publishable {
                 System.out.println("Error 6 - " + t);
                 t.printStackTrace();
             }
-        }, 5000, 10, TimeUnit.MILLISECONDS);
+        }, 5000, 10, TimeUnit.MILLISECONDS);*/
+
+        ScheduledExecutorService edgarDataPublisherScheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Edgar-Data-Publisher").build());
+        edgarDataPublisherScheduler.scheduleAtFixedRate(() -> {
+            try {
+//                int iterations = 500;
+                int iterations = EdgarUtil2.generateTps(dataPublisherCounter.getAndIncrement());
+                int repeatCount = 4;
+                for(int i = 0;i < iterations;i++) {
+                    EventWrapper event = eventQueue.poll();
+                    if(event != null) {
+                        for(int j = 0;j < repeatCount;j++) {
+                            ResearchEventPublisher.publishEventEdgar(event.getEvent(), getStreamId());
+                            int eventsSize = event.getEventSizeInBytes();
+                            messageSize.addAndGet(eventsSize);
+                        }
+                    } else {
+                        log.error("No data to publish, reader is slow");
+                    }
+                }
+            } catch (Throwable t) {
+                System.out.println("Error at publish boss scheduler - " + t);
+                t.printStackTrace();
+            }
+        }, 4000, 10, TimeUnit.MILLISECONDS);
 
         ScheduledExecutorService edgarDataRatePrinter = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Edgar-Data-Rate-Printer").build());
         edgarDataRatePrinter.scheduleAtFixedRate(() -> {

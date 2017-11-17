@@ -18,6 +18,7 @@
 
 package publisher;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.tanukisoftware.wrapper.WrapperListener;
@@ -46,6 +47,9 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 //mvn exec:java -Dexec.mainClass="publisher.ResearchEventPublisher"
 public class ResearchEventPublisher implements WrapperListener {
@@ -69,7 +73,7 @@ public class ResearchEventPublisher implements WrapperListener {
 
     private static int currentPublicPublishCount = 0;
     private static int publicSent = 0;
-    private static int count = 0;
+    private static AtomicInteger count = new AtomicInteger(0);
     private static int totalSentToPublicCloud;
 
     private static int eventPercentageToBeSentToPublicCloud = 0;
@@ -87,6 +91,8 @@ public class ResearchEventPublisher implements WrapperListener {
 
     private static final int batchSize = 478;
 
+    private static ExecutorService publishWorkers;
+
     public static void main(String[] args) throws InterruptedException {
         WrapperManager.start(new ResearchEventPublisher(), args);
     }
@@ -97,7 +103,7 @@ public class ResearchEventPublisher implements WrapperListener {
         // Email
 //        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000)); - 40000 tps support and good percent to public VM
         // EDGAR
-        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 25 * 1000,  27 * 1000, 2 * 1000));
+        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
 //        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.134", 10, 10, 10));
         //vmConfigList.add(new VMConfig(2, 7611, "192.168.57.81", 20 * 1000,  22 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(3, 7611, "192.168.57.82", 30 * 1000,  32 * 1000, 10 * 1000));
@@ -199,8 +205,10 @@ public class ResearchEventPublisher implements WrapperListener {
 
     public static void publishEvent(Object[] eventPayload, String streamId) throws InterruptedException {
 
+        int currentCount = count.getAndIncrement();
+
         if (sendToPublicCloud && (currentDataPublisher == privateDataPublisher)){
-            if (count % (66 - eventPercentageToBeSentToPublicCloud) == 0){
+            if (currentCount % (200 - eventPercentageToBeSentToPublicCloud) == 0){
                 currentDataPublisher = null; //setting to null for it to be picked interchangeably when  sending event in line # 162
             }
         }
@@ -266,16 +274,74 @@ public class ResearchEventPublisher implements WrapperListener {
                 currentPublicPublishCount = 0;
             }
         }
-        ++count;
+
 //        if ( % publishingRate == 0) {
 //            Thread.sleep(1000);
 //        }
 
-        if (count % 100000 == 0){
-            log.info("Done Sending " + (float)count/1000000.0  + " M Events[TotalSentToPublicCloud=" + totalSentToPublicCloud + ", PublicCloudSendingRatio=" + eventPercentageToBeSentToPublicCloud + "]");
+        if (currentCount % 100000 == 0){
+            log.info("Done Sending " + (float)currentCount/1000000.0  + " M Events[TotalSentToPublicCloud=" + totalSentToPublicCloud + ", PublicCloudSendingRatio=" + eventPercentageToBeSentToPublicCloud + "]");
         }
 
-        if (count == 150000000){
+        if (currentCount == 100000000){
+            System.exit(0);
+        }
+    }
+
+    public static void publishEventEdgar(Object[] eventPayload, final String streamId) throws InterruptedException {
+
+        int currentCount = count.getAndIncrement();
+
+        if (sendToPublicCloud && (currentDataPublisher == privateDataPublisher)){
+            if (currentCount % (200 - eventPercentageToBeSentToPublicCloud) == 0){
+                currentDataPublisher = null; //setting to null for it to be picked interchangeably when  sending event in line # 162
+            }
+        }
+
+        if (currentDataPublisher == privateDataPublisher){
+            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+            publishWorkers.submit(() -> {
+                try {
+                    privateDataPublisher.publish(event);
+                } catch (Throwable t) {
+                    System.out.println("Error at publish worker - " + t);
+                    t.printStackTrace();
+                }
+            });
+        }
+
+        if (currentDataPublisher != privateDataPublisher){
+            publicSent++;
+            totalSentToPublicCloud++;
+
+            String heStreamId = "inputHEEdgarStream:1.0.0";
+            Event event = new Event(heStreamId, System.currentTimeMillis(), null, null, eventPayload);
+            if(!AsyncEdgarCompositeHeEventPublisher.addToQueue(event)) {
+                Event rejectedEvent = new Event(streamId, event.getTimeStamp(), null, null, event.getPayloadData());
+                publishWorkers.submit(() -> {
+                    try {
+                        privateDataPublisher.publish(rejectedEvent);
+                    } catch (Throwable t) {
+                        System.out.println("Error at publish worker - " + t);
+                        t.printStackTrace();
+                    }
+                });
+            }
+        }
+
+        if (currentDataPublisher != privateDataPublisher){
+            if (++currentPublicPublishCount == eventPercentageToBeSentToPublicCloud){
+                currentDataPublisher = privateDataPublisher;
+                currentPublicPublishCount = 0;
+            }
+        }
+
+
+        if (currentCount % 100000 == 0){
+            log.info("Done Sending " + (float)currentCount/1000000.0  + " M Events[TotalSentToPublicCloud=" + totalSentToPublicCloud + ", PublicCloudSendingRatio=" + eventPercentageToBeSentToPublicCloud + "]");
+        }
+
+        if (currentCount == 120000000){
             System.exit(0);
         }
     }
@@ -350,11 +416,11 @@ public class ResearchEventPublisher implements WrapperListener {
         if (!isOutOfOrder && sendToPublicCloud){
             publishEvent(eventPayload, streamId);
         } else{
-            ++count;
+            count.incrementAndGet();
             privateDataPublisher.tryPublish(event);
         }
 
-        if (count % 12000 == 0) {
+        if (count.get() % 12000 == 0) {
             Thread.sleep(1000);
         }
     }
@@ -394,6 +460,8 @@ public class ResearchEventPublisher implements WrapperListener {
             }
 //            AsyncCompositeHeEventPublisher.init();
             AsyncEdgarCompositeHeEventPublisher.init();
+
+            publishWorkers = Executors.newFixedThreadPool(20, new ThreadFactoryBuilder().setNameFormat("Publish-Workers").build());
 
 //            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
 //            publisher.startPublishing();
