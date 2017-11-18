@@ -103,7 +103,7 @@ public class ResearchEventPublisher implements WrapperListener {
         // Email
 //        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000)); - 40000 tps support and good percent to public VM
         // EDGAR
-        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
+        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 10 * 1000,  12 * 1000, 2 * 1000));
 //        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.134", 10, 10, 10));
         //vmConfigList.add(new VMConfig(2, 7611, "192.168.57.81", 20 * 1000,  22 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(3, 7611, "192.168.57.82", 30 * 1000,  32 * 1000, 10 * 1000));
@@ -293,7 +293,7 @@ public class ResearchEventPublisher implements WrapperListener {
         int currentCount = count.getAndIncrement();
 
         if (sendToPublicCloud && (currentDataPublisher == privateDataPublisher)){
-            if (currentCount % (200 - eventPercentageToBeSentToPublicCloud) == 0){
+            if (currentCount % (100 - eventPercentageToBeSentToPublicCloud) == 0){
                 currentDataPublisher = null; //setting to null for it to be picked interchangeably when  sending event in line # 162
             }
         }
@@ -308,6 +308,13 @@ public class ResearchEventPublisher implements WrapperListener {
                     t.printStackTrace();
                 }
             });
+
+            //When need to trigger public Siddhi VM only
+            /*String heStreamId = "inputHEEdgarStream:1.0.0";
+            Event event = new Event(heStreamId, System.currentTimeMillis(), null, null, eventPayload);
+            if(!AsyncEdgarCompositeHeEventPublisher.addToQueue(event)) {
+                //Nothing to do
+            }*/
         }
 
         if (currentDataPublisher != privateDataPublisher){
@@ -341,7 +348,7 @@ public class ResearchEventPublisher implements WrapperListener {
             log.info("Done Sending " + (float)currentCount/1000000.0  + " M Events[TotalSentToPublicCloud=" + totalSentToPublicCloud + ", PublicCloudSendingRatio=" + eventPercentageToBeSentToPublicCloud + "]");
         }
 
-        if (currentCount == 120000000){
+        if (currentCount == 80000000){
             System.exit(0);
         }
     }

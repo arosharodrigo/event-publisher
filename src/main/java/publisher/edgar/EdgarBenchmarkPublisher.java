@@ -42,7 +42,7 @@ public class EdgarBenchmarkPublisher extends Publishable {
         ScheduledExecutorService dataProducerScheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Edgar-Data-Producer").build());
         dataProducerScheduler.scheduleAtFixedRate(() -> {
             try {
-                for(int i = 0;i < 500;i++) {//465
+                for(int i = 0;i < 1000;i++) {//465
                     if(recordsIterator.hasNext()) {
                         if(eventQueue.size() < 1000000) {
                             EventWrapper event = createRecord(recordsIterator.next());
@@ -83,8 +83,8 @@ public class EdgarBenchmarkPublisher extends Publishable {
         ScheduledExecutorService edgarDataPublisherScheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Edgar-Data-Publisher").build());
         edgarDataPublisherScheduler.scheduleAtFixedRate(() -> {
             try {
-//                int iterations = 500;
-                int iterations = EdgarUtil2.generateTps(dataPublisherCounter.getAndIncrement());
+//                int iterations = 200;
+                int iterations = EdgarUtil2.generateTps(dataPublisherCounter.getAndIncrement()) * 2 / 3;
                 int repeatCount = 4;
                 for(int i = 0;i < iterations;i++) {
                     EventWrapper event = eventQueue.poll();
@@ -151,7 +151,7 @@ public class EdgarBenchmarkPublisher extends Publishable {
         String norefer = record.get(10);
         messageSize += norefer.getBytes().length;
 
-        String noagent = record.get(11);
+        String noagent = record.get(11) + "EosvmGSOs0DxTQIcDMnES2Hpboy6JIz0T3xAiLq1YofiC9EHW2lZ0lxZJzr9Eron0MQFs2A6qCORtBz5WLWXn2ypzzMnwDqvX0Ej0cZ428HnCzP0O6M2ReNnl6N6nlkVtyYBZ78Lbxsrq0v5N3pKSqlg7mJ1KUsPSaMfGwFGKebEee5k4KfgqabJT86nlfjT21cg7rTTOh8GzmALScl3hprHYSjkLQFGOeCR68Fb7D3Drl2GrT98YS7Ui6WYTitJSLczQ35oHGVmN6xIJxED57oaEvRHxEKbMbucs7xEuQPR4cMKymRPF58S8ijV0OJ2yDfRC4Vx3zw1sMqHZGlyL7kL34EsE3EhcLyGFZSRU5lDrao6QBxH8uZNG4lmHY1sPrchKbRexZSvhG1PqbA918OeTinIYZckLB1oXRH4vlbeBFht7iiBMOBpJKz57JuboizzF0j7CFOwBS1haDuB9P4sxZHDheKkSaB3wMsx3hCzrM3p8LYBHITb0GEKqRbY2JKgBavMGMZ1o1DQj8k6673ivmZvuLcJ0W9oTG9f1AImy979Xgu5iTx2wBmIp4S4VEb3COfCMQ6LDaB21xQFas9iwx3uRf18LIP66RIr3m0wJyymOTwkCtq8fqQ8Us6bwFzWsgbGfOl5zYn73J0Ai4FTvOelpgECrftLXXSGJa5JUrNxjCWqprItHNit9Bw6YaIJFWCpjaI2D1NM86GQtatEgyL2yw811HzEwjha5yw26SVGxqN33Z0Gej6VNJhujlWmlj6kjGerVSJWjPCHweCDtCeJMY1FExzJbaGiFLg0iKsDJG8gXYIvhvbfF4kia2ilr8Z15tNlVcKA2wuf5czwJV6F1kIkjPG2qLKfDGJ6q8cDQgTnph5Qh8GqAeLjYDXUg7qa8D1RSfmqVoH8nQE6qCbY2jaYYsEKYxmZczvpMCblMAm3rCkrcsaeTHzJTacoEXh0tMMOKkXzDIR8wY4tm1LF9yfec9LC9TyyiQXjUugoKoPTlsC3QHhmgc27";
         messageSize += noagent.getBytes().length;
 
         String find = record.get(12);

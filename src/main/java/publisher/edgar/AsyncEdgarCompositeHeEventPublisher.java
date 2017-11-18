@@ -31,7 +31,7 @@ public class AsyncEdgarCompositeHeEventPublisher {
 
     private static ScheduledExecutorService heEventLimiter;
     private static AtomicLong heEventsReceivedForPeriod = new AtomicLong(0);
-    private static final int maxHeEventsReceivedForPeriod = 200;
+    private static final int maxHeEventsReceivedForPeriod = 150;
 
     private static final int batchSize = 478;
     private static final int maxFieldLength = 20;
