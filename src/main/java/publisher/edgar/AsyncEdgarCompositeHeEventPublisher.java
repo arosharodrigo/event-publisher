@@ -31,6 +31,10 @@ public class AsyncEdgarCompositeHeEventPublisher {
 
     private static ScheduledExecutorService heEventLimiter;
     private static AtomicLong heEventsReceivedForPeriod = new AtomicLong(0);
+    private static int currentWaitingCountBeforeDelegatePrivate = 0;
+    private static int maxWaitingCountBeforeDelegatePrivate = 10;
+    private static long totalDelegatePrivateCount = 0;
+
     private static final int maxHeEventsReceivedForPeriod = 150;
 
     private static final int batchSize = 478;
@@ -51,6 +55,7 @@ public class AsyncEdgarCompositeHeEventPublisher {
             try {
                 while(true) {
                     if(plainQueue.size() > compositeEventSize) {
+                        currentWaitingCountBeforeDelegatePrivate = 0;
                         List<Event> events = new ArrayList<>();
                         for(int i=0; i < compositeEventSize; i++) {
                             events.add(plainQueue.poll());
@@ -65,12 +70,19 @@ public class AsyncEdgarCompositeHeEventPublisher {
                             }
                         });
                     } else {
-                        Thread.sleep(5);
                         if(plainQueue.size() > 0 && heEventsReceivedForPeriod.get() == 0) {
-                            for(int i = 0; i < plainQueue.size(); i++) {
-                                ResearchEventPublisher.sendThroughPrivatePublisher(plainQueue.poll(), "inputEdgarStream:1.0.0");
+                            currentWaitingCountBeforeDelegatePrivate++;
+                            if(currentWaitingCountBeforeDelegatePrivate >= maxWaitingCountBeforeDelegatePrivate) {
+                                for(int i = 0; i < plainQueue.size(); i++) {
+                                    totalDelegatePrivateCount++;
+                                    ResearchEventPublisher.sendThroughPrivatePublisher(plainQueue.poll(), "inputEdgarStream:1.0.0");
+                                }
+                                currentWaitingCountBeforeDelegatePrivate = 0;
+                            } else {
+                                // Nothing to do
                             }
                         }
+                        Thread.sleep(5);
                     }
                 }
             } catch (Throwable th) {
@@ -97,7 +109,9 @@ public class AsyncEdgarCompositeHeEventPublisher {
 
         eventCountPrinter = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Event-Count-Printer").build());
         eventCountPrinter.scheduleAtFixedRate(() -> {
-            log.info("Plain queue size [" + plainQueue.size() + "], Total Plain Count [" + totalPlainCount.get() + "], Encrypted queue size [" + encryptedQueue.size() + "], Total Encrypted count [" + totalEncryptedCount.get() + "]");
+            log.info("Plain queue size [" + plainQueue.size() + "], Total Plain Count [" + totalPlainCount.get() + "], " +
+                    "Private VM Delegated Count [" + totalDelegatePrivateCount + "], Encrypted queue size [" + encryptedQueue.size() + "], " +
+                    "Total Encrypted count [" + totalEncryptedCount.get() + "]");
         }, 5000, 5000, TimeUnit.MILLISECONDS);
 
         heEventLimiter = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Event-Count-Printer").build());
