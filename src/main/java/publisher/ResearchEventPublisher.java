@@ -205,7 +205,7 @@ public class ResearchEventPublisher implements WrapperListener {
 
     public static void publishEvent(Object[] eventPayload, String streamId) throws InterruptedException {
 
-        int currentCount = count.getAndIncrement();
+        int currentCount = count.incrementAndGet();
 
         if (sendToPublicCloud && (currentDataPublisher == privateDataPublisher)){
             if (currentCount % (200 - eventPercentageToBeSentToPublicCloud) == 0){
@@ -290,7 +290,7 @@ public class ResearchEventPublisher implements WrapperListener {
 
     public static void publishEventEdgar(Object[] eventPayload, final String streamId) throws InterruptedException {
 
-        int currentCount = count.getAndIncrement();
+        int currentCount = count.incrementAndGet();
 
         if (sendToPublicCloud && (currentDataPublisher == privateDataPublisher)){
             if (currentCount % (100 - eventPercentageToBeSentToPublicCloud) == 0){
@@ -349,6 +349,7 @@ public class ResearchEventPublisher implements WrapperListener {
         }
 
         if (currentCount == 80000000){
+            Thread.sleep(2000);
             System.exit(0);
         }
     }
