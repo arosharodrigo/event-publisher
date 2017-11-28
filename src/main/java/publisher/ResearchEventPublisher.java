@@ -28,6 +28,7 @@ import org.wso2.carbon.databridge.agent.DataPublisher;
 import org.wso2.carbon.databridge.commons.Event;
 import org.wso2.siddhi.extension.he.api.HomomorphicEncDecService;
 import publisher.edgar.AsyncEdgarCompositeHeEventPublisher;
+import publisher.edgar.AsyncEdgarCompositeHeEventPublisher2;
 import publisher.edgar.EdgarBenchmarkPublisher;
 import publisher.email.EmailBenchmarkPublisher;
 import publisher.filter.AsyncCompositeHeEventPublisher;
@@ -262,7 +263,7 @@ public class ResearchEventPublisher implements WrapperListener {
             String previousStreamId = streamId;
             streamId = "inputHEEdgarStream:1.0.0";
             Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-            if(!AsyncEdgarCompositeHeEventPublisher.addToQueue(event)) {
+            if(!AsyncEdgarCompositeHeEventPublisher2.addToQueue(event)) {
                 event = new Event(previousStreamId, System.currentTimeMillis(), null, null, eventPayload);
                 privateDataPublisher.publish(event);
             }
@@ -312,7 +313,7 @@ public class ResearchEventPublisher implements WrapperListener {
             //When need to trigger public Siddhi VM only
             /*String heStreamId = "inputHEEdgarStream:1.0.0";
             Event event = new Event(heStreamId, System.currentTimeMillis(), null, null, eventPayload);
-            if(!AsyncEdgarCompositeHeEventPublisher.addToQueue(event)) {
+            if(!AsyncEdgarCompositeHeEventPublisher2.addToQueue(event)) {
                 //Nothing to do
             }*/
         }
@@ -323,7 +324,7 @@ public class ResearchEventPublisher implements WrapperListener {
 
             String heStreamId = "inputHEEdgarStream:1.0.0";
             Event event = new Event(heStreamId, System.currentTimeMillis(), null, null, eventPayload);
-            if(!AsyncEdgarCompositeHeEventPublisher.addToQueue(event)) {
+            if(!AsyncEdgarCompositeHeEventPublisher2.addToQueue(event)) {
                 Event rejectedEvent = new Event(streamId, event.getTimeStamp(), null, null, event.getPayloadData());
                 publishWorkers.submit(() -> {
                     try {
@@ -440,7 +441,8 @@ public class ResearchEventPublisher implements WrapperListener {
         System.out.println("=================================================================================");
 
         homomorphicEncDecService = new HomomorphicEncDecService();
-        homomorphicEncDecService.init(Configuration.getProperty("key.file.path"));
+//        homomorphicEncDecService.init(Configuration.getProperty("key.file.path"));
+        homomorphicEncDecService.init(Configuration.getProperty("key.file.path2"));
 
         // To avoid exception xml parsing error occur for java 8
         System.setProperty("org.xml.sax.driver", "com.sun.org.apache.xerces.internal.parsers.SAXParser");
@@ -467,7 +469,8 @@ public class ResearchEventPublisher implements WrapperListener {
                 vmManager.start();
             }
 //            AsyncCompositeHeEventPublisher.init();
-            AsyncEdgarCompositeHeEventPublisher.init();
+//            AsyncEdgarCompositeHeEventPublisher.init();
+            AsyncEdgarCompositeHeEventPublisher2.init();
 
             publishWorkers = Executors.newFixedThreadPool(20, new ThreadFactoryBuilder().setNameFormat("Publish-Workers").build());
 
@@ -510,6 +513,7 @@ public class ResearchEventPublisher implements WrapperListener {
             }
         }
         vm1DataPublisher.publish(event);
+//        privateDataPublisher.publish(event);
     }
 
     public static void sendThroughPrivatePublisher(Event event, String streamId) {

@@ -34,7 +34,7 @@ public class AsyncEdgarCompositeHeEventPublisher2 {
     private static int maxWaitingCountBeforeDelegatePrivate = 10;
     private static long totalDelegatePrivateCount = 0;
 
-    private static final int maxHeEventsReceivedForPeriod = 2000;
+    private static final int maxHeEventsReceivedForPeriod = 42;
 
     private static final int batchSize = 168;
     private static final int maxFieldLength = 1;
