@@ -26,6 +26,24 @@ public class AsyncCompositeHeEventPublisher {
     private static ExecutorService encryptBossScheduler;
     private static ScheduledExecutorService encryptedEventsPublisher;
 
+    private static Queue<Event> plainQueueVm2;
+    private static Queue<Event> encryptedQueueVm2;
+    private static ExecutorService encryptWorkersVm2;
+    private static ExecutorService encryptBossSchedulerVm2;
+    private static ScheduledExecutorService encryptedEventsPublisherVm2;
+
+    private static Queue<Event> plainQueueVm3;
+    private static Queue<Event> encryptedQueueVm3;
+    private static ExecutorService encryptWorkersVm3;
+    private static ExecutorService encryptBossSchedulerVm3;
+    private static ScheduledExecutorService encryptedEventsPublisherVm3;
+
+    private static Queue<Event> plainQueueVm4;
+    private static Queue<Event> encryptedQueueVm4;
+    private static ExecutorService encryptWorkersVm4;
+    private static ExecutorService encryptBossSchedulerVm4;
+    private static ScheduledExecutorService encryptedEventsPublisherVm4;
+
 //    private static ExecutorService encryptedEventsPublishScheduler;
 
     private static ScheduledExecutorService eventCountPrinter;
@@ -33,8 +51,17 @@ public class AsyncCompositeHeEventPublisher {
     private static final int maxEmailLength = 40;
     private static final int compositeEventSize = 10;
 
-    private static AtomicLong totalPlainCount = new AtomicLong(0);
-    private static AtomicLong totalEncryptedCount = new AtomicLong(0);
+    private static AtomicLong totalPlainCountVm1 = new AtomicLong(0);
+    private static AtomicLong totalEncryptedCountVm1 = new AtomicLong(0);
+
+    private static AtomicLong totalPlainCountVm2 = new AtomicLong(0);
+    private static AtomicLong totalEncryptedCountVm2 = new AtomicLong(0);
+
+    private static AtomicLong totalPlainCountVm3 = new AtomicLong(0);
+    private static AtomicLong totalEncryptedCountVm3 = new AtomicLong(0);
+
+    private static AtomicLong totalPlainCountVm4 = new AtomicLong(0);
+    private static AtomicLong totalEncryptedCountVm4 = new AtomicLong(0);
 
     public static void init() throws Exception {
         plainQueue = new ArrayBlockingQueue<>(10000000);
@@ -55,7 +82,7 @@ public class AsyncCompositeHeEventPublisher {
                             try {
                                 Event encryptedEvent = createCompositeEvent(events);
                                 encryptedQueue.add(encryptedEvent);
-                                totalEncryptedCount.addAndGet(compositeEventSize);
+                                totalEncryptedCountVm1.addAndGet(compositeEventSize);
                             } catch (Exception th) {
                                 log.error("Error occurred in encrypt worker thread", th);
                             }
@@ -111,16 +138,183 @@ public class AsyncCompositeHeEventPublisher {
             }
         });*/
 
+
+        plainQueueVm2 = new ArrayBlockingQueue<>(10000000);
+        encryptedQueueVm2 = new ArrayBlockingQueue<>(10000000);
+
+        encryptWorkersVm2 = Executors.newFixedThreadPool(20, new ThreadFactoryBuilder().setNameFormat("Composite-Event-Encode-Workers-2").build());
+
+        encryptBossSchedulerVm2 = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Encrypt-Boss-2").build());
+        encryptBossSchedulerVm2.submit(() -> {
+            try {
+                while(true) {
+                    if(plainQueueVm2.size() > compositeEventSize) {
+                        List<Event> events = new ArrayList<>();
+                        for(int i=0; i < compositeEventSize; i++) {
+                            events.add(plainQueueVm2.poll());
+                        }
+                        encryptWorkersVm2.submit(() -> {
+                            try {
+                                Event encryptedEvent = createCompositeEvent(events);
+                                encryptedQueueVm2.add(encryptedEvent);
+                                totalEncryptedCountVm2.addAndGet(compositeEventSize);
+                            } catch (Exception th) {
+                                log.error("Error occurred in encrypt worker thread", th);
+                            }
+                        });
+                    } else {
+                        Thread.sleep(5);
+                    }
+                }
+            } catch (Throwable th) {
+                log.error("Error occurred in encrypting thread", th);
+            }
+        });
+
+        encryptedEventsPublisherVm2 = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Encrypted-Events-Publisher-2").build());
+        encryptedEventsPublisherVm2.scheduleAtFixedRate(() -> {
+            try {
+                int encryptedQueueSize = encryptedQueueVm2.size();
+                if(encryptedQueueSize > 0) {
+                    for(int i=0; i < encryptedQueueSize; i++) {
+                        Event event = encryptedQueueVm2.poll();
+                        ResearchEventPublisher.sendThroughVm2Publisher(event);
+                    }
+                } else {
+                    // Nothing to do
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+        }, 5000, 10, TimeUnit.MILLISECONDS);
+
+
+        plainQueueVm3 = new ArrayBlockingQueue<>(10000000);
+        encryptedQueueVm3 = new ArrayBlockingQueue<>(10000000);
+
+        encryptWorkersVm3 = Executors.newFixedThreadPool(20, new ThreadFactoryBuilder().setNameFormat("Composite-Event-Encode-Workers-3").build());
+
+        encryptBossSchedulerVm3 = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Encrypt-Boss-3").build());
+        encryptBossSchedulerVm3.submit(() -> {
+            try {
+                while(true) {
+                    if(plainQueueVm3.size() > compositeEventSize) {
+                        List<Event> events = new ArrayList<>();
+                        for(int i=0; i < compositeEventSize; i++) {
+                            events.add(plainQueueVm3.poll());
+                        }
+                        encryptWorkersVm3.submit(() -> {
+                            try {
+                                Event encryptedEvent = createCompositeEvent(events);
+                                encryptedQueueVm3.add(encryptedEvent);
+                                totalEncryptedCountVm3.addAndGet(compositeEventSize);
+                            } catch (Exception th) {
+                                log.error("Error occurred in encrypt worker thread", th);
+                            }
+                        });
+                    } else {
+                        Thread.sleep(5);
+                    }
+                }
+            } catch (Throwable th) {
+                log.error("Error occurred in encrypting thread", th);
+            }
+        });
+
+        encryptedEventsPublisherVm3 = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Encrypted-Events-Publisher-3").build());
+        encryptedEventsPublisherVm3.scheduleAtFixedRate(() -> {
+            try {
+                int encryptedQueueSize = encryptedQueueVm3.size();
+                if(encryptedQueueSize > 0) {
+                    for(int i=0; i < encryptedQueueSize; i++) {
+                        Event event = encryptedQueueVm3.poll();
+                        ResearchEventPublisher.sendThroughVm3Publisher(event);
+                    }
+                } else {
+                    // Nothing to do
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+        }, 5000, 10, TimeUnit.MILLISECONDS);
+
+
+        plainQueueVm4 = new ArrayBlockingQueue<>(10000000);
+        encryptedQueueVm4 = new ArrayBlockingQueue<>(10000000);
+
+        encryptWorkersVm4 = Executors.newFixedThreadPool(20, new ThreadFactoryBuilder().setNameFormat("Composite-Event-Encode-Workers-4").build());
+
+        encryptBossSchedulerVm4 = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("Encrypt-Boss-4").build());
+        encryptBossSchedulerVm4.submit(() -> {
+            try {
+                while(true) {
+                    if(plainQueueVm4.size() > compositeEventSize) {
+                        List<Event> events = new ArrayList<>();
+                        for(int i=0; i < compositeEventSize; i++) {
+                            events.add(plainQueueVm4.poll());
+                        }
+                        encryptWorkersVm4.submit(() -> {
+                            try {
+                                Event encryptedEvent = createCompositeEvent(events);
+                                encryptedQueueVm4.add(encryptedEvent);
+                                totalEncryptedCountVm4.addAndGet(compositeEventSize);
+                            } catch (Exception th) {
+                                log.error("Error occurred in encrypt worker thread", th);
+                            }
+                        });
+                    } else {
+                        Thread.sleep(5);
+                    }
+                }
+            } catch (Throwable th) {
+                log.error("Error occurred in encrypting thread", th);
+            }
+        });
+
+        encryptedEventsPublisherVm4 = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Encrypted-Events-Publisher-4").build());
+        encryptedEventsPublisherVm4.scheduleAtFixedRate(() -> {
+            try {
+                int encryptedQueueSize = encryptedQueueVm4.size();
+                if(encryptedQueueSize > 0) {
+                    for(int i=0; i < encryptedQueueSize; i++) {
+                        Event event = encryptedQueueVm4.poll();
+                        ResearchEventPublisher.sendThroughVm4Publisher(event);
+                    }
+                } else {
+                    // Nothing to do
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+        }, 5000, 10, TimeUnit.MILLISECONDS);
+
         eventCountPrinter = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("Event-Count-Printer").build());
         eventCountPrinter.scheduleAtFixedRate(() -> {
-                log.info("Plain queue size [" + plainQueue.size() + "], Total Plain Count [" + totalPlainCount.get() + "], Encrypted queue size [" + encryptedQueue.size() + "], Total Encrypted count [" + totalEncryptedCount.get() + "]");
+                log.info("Plain queue size [" + plainQueue.size() + "|" + plainQueueVm2.size() + "|" + plainQueueVm3.size() + "|" + plainQueueVm4.size() + "], " +
+                        "Total Plain Count [" + totalPlainCountVm1.get() + "|" + totalPlainCountVm2.get() + "|" + totalPlainCountVm3.get() + "|" + totalPlainCountVm4.get() + "], " +
+                        "Encrypted queue size [" + encryptedQueue.size() + "|" + encryptedQueueVm2.size() + "|" + encryptedQueueVm3.size() + "|" + encryptedQueueVm4.size() + "], " +
+                        "Total Encrypted count [" + totalEncryptedCountVm1.get() + "|" + totalEncryptedCountVm2.get() + "|" + totalEncryptedCountVm3.get() + "|" + totalEncryptedCountVm4.get() + "]");
         }, 5000, 5000, TimeUnit.MILLISECONDS);
 
     }
 
-    public static void addToQueue(Event event) {
-        plainQueue.add(event);
-        totalPlainCount.incrementAndGet();
+    public static void addToQueue(Event event, int publisherIndex) {
+        if(publisherIndex == 1) {
+            totalPlainCountVm1.incrementAndGet();
+            plainQueue.add(event);
+        } else if(publisherIndex == 2) {
+            totalPlainCountVm2.incrementAndGet();
+            plainQueueVm2.add(event);
+        } else if(publisherIndex == 3) {
+            totalPlainCountVm3.incrementAndGet();
+            plainQueueVm3.add(event);
+        } else if(publisherIndex == 4) {
+            totalPlainCountVm4.incrementAndGet();
+            plainQueueVm4.add(event);
+        } else {
+            totalPlainCountVm1.incrementAndGet();
+            plainQueue.add(event);
+        }
     }
 
     public static Event createCompositeEvent(List<Event> events){

@@ -65,6 +65,9 @@ public class ResearchEventPublisher implements WrapperListener {
     private static DataPublisher privateDataPublisher;
     private static DataPublisher currentDataPublisher;
     private static DataPublisher vm1DataPublisher;
+    private static DataPublisher vm2DataPublisher;
+    private static DataPublisher vm3DataPublisher;
+    private static DataPublisher vm4DataPublisher;
 
     private static PublicCloudDataPublishManager publicCloudDataPublishManager = new PublicCloudDataPublishManager();
     private static ArrayList<DataPublisher> publicCloudPublishers = new ArrayList<DataPublisher>();
@@ -86,8 +89,8 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int publicCloudPublishBatchSize = 40000;
 
 //    public static FilterBenchmarkPublisher publisher;
-//    public static EmailBenchmarkPublisher publisher;
-    public static EdgarBenchmarkPublisher publisher;
+    public static EmailBenchmarkPublisher publisher;
+//    public static EdgarBenchmarkPublisher publisher;
     public static HomomorphicEncDecService homomorphicEncDecService;
 
     private static final int batchSize = 478;
@@ -103,8 +106,12 @@ public class ResearchEventPublisher implements WrapperListener {
 
         // Email
 //        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000)); - 40000 tps support and good percent to public VM
+        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
+        vmConfigList.add(new VMConfig(2, Integer.valueOf(Configuration.getProperty("public.das.vm2.port")), Configuration.getProperty("public.das.vm2.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
+        vmConfigList.add(new VMConfig(3, Integer.valueOf(Configuration.getProperty("public.das.vm3.port")), Configuration.getProperty("public.das.vm3.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
+        vmConfigList.add(new VMConfig(4, Integer.valueOf(Configuration.getProperty("public.das.vm4.port")), Configuration.getProperty("public.das.vm4.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
         // EDGAR
-        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 10 * 1000,  12 * 1000, 2 * 1000));
+//        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 10 * 1000,  12 * 1000, 2 * 1000));
 //        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.134", 10, 10, 10));
         //vmConfigList.add(new VMConfig(2, 7611, "192.168.57.81", 20 * 1000,  22 * 1000, 10 * 1000));
         //vmConfigList.add(new VMConfig(3, 7611, "192.168.57.82", 30 * 1000,  32 * 1000, 10 * 1000));
@@ -207,84 +214,63 @@ public class ResearchEventPublisher implements WrapperListener {
     public static void publishEvent(Object[] eventPayload, String streamId) throws InterruptedException {
 
         int currentCount = count.incrementAndGet();
+        int publicCloudPublishersSize = publicCloudPublishers.size();
 
         if (sendToPublicCloud && (currentDataPublisher == privateDataPublisher)){
-            if (currentCount % (200 - eventPercentageToBeSentToPublicCloud) == 0){
+            if (currentCount % 264 == 0){
                 currentDataPublisher = null; //setting to null for it to be picked interchangeably when  sending event in line # 162
             }
         }
 
-        if (currentDataPublisher == privateDataPublisher){
-//            if(isHeEventMode) {
-//                AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
-//            } else {
-                Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-                currentDataPublisher.publish(event);
+        if ((currentDataPublisher == privateDataPublisher)  || (publicCloudPublishersSize == 0)){
+//                Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+//                currentDataPublisher.publish(event);
+            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+            publishWorkers.submit(() -> {
+                try {
+                    privateDataPublisher.publish(event);
+                } catch (Throwable t) {
+                    System.out.println("Error at publish worker - " + t);
+                    t.printStackTrace();
+                }
+            });
 
-//            streamId = "inputHEEmailsStream:1.0.0";
-//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-//            AsyncCompositeHeEventPublisher.addToQueue(event);
-
-//            AsyncCompositeHeEventPublisher.addToQueue(eventPayload);
-
-            //****** Remove this b4 perf test ******//
-//            streamId = "inputHEEmailsStream:1.0.0";
-//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, encrypt2(eventPayload));
-//            currentDataPublisher.publish(event);
-//            DataPublisher dataPublisher = PublicCloudDataPublishManager.vmIdToDataPublisher.get(1);
-//            dataPublisher.tryPublish(event);
-//            currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
-//            currentDataPublisher.tryPublish(event);
-
-//            }
         }
 
-        if (currentDataPublisher != privateDataPublisher){
+        if ((currentDataPublisher != privateDataPublisher) && (publicCloudPublishersSize > 0)){
             publicSent++;
             totalSentToPublicCloud++;
-//            eventPayload = compress(eventPayload);
-//            eventPayload = encrypt(eventPayload);
-//            streamId = publisher.getStreamId(true);
 
-//            streamId = "inputHEEmailsStream:1.0.0";
-//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, encrypt2(eventPayload));
-//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
+            int publisherIndex = (publicCloudPublishersSize > currentPublicPublishCount) ? currentPublicPublishCount + 1 : 1;
 
-//            DataPublisher dataPublisher = PublicCloudDataPublishManager.vmIdToDataPublisher.get(1);
-//            dataPublisher.tryPublish(event);
-//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-//            currentDataPublisher = publicCloudPublishers.get((count % publicCloudPublishBatchSize) % publicCloudPublishers.size());
-//            currentDataPublisher.tryPublish(event);
-
-//            streamId = "inputHEEmailsStream:1.0.0";
-//            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-//            AsyncCompositeHeEventPublisher.addToQueue(event);
-
-            String previousStreamId = streamId;
-            streamId = "inputHEEdgarStream:1.0.0";
-            Event event = new Event(streamId, System.currentTimeMillis(), null, null, eventPayload);
-            if(!AsyncEdgarCompositeHeEventPublisher2.addToQueue(event)) {
-                event = new Event(previousStreamId, System.currentTimeMillis(), null, null, eventPayload);
-                privateDataPublisher.publish(event);
-            }
+            String heStreamId = "inputHEEmailsStream:1.0.0";
+            Event event = new Event(heStreamId, System.currentTimeMillis(), null, null, eventPayload);
+            AsyncCompositeHeEventPublisher.addToQueue(event, publisherIndex);
+            /*if(!AsyncCompositeHeEventPublisher.addToQueue(event)) {
+                Event rejectedEvent = new Event(streamId, event.getTimeStamp(), null, null, event.getPayloadData());
+                publishWorkers.submit(() -> {
+                    try {
+                        privateDataPublisher.publish(rejectedEvent);
+                    } catch (Throwable t) {
+                        System.out.println("Error at publish worker - " + t);
+                        t.printStackTrace();
+                    }
+                });
+            }*/
         }
 
         if (currentDataPublisher != privateDataPublisher){
-            if (++currentPublicPublishCount == eventPercentageToBeSentToPublicCloud){
+            if (++currentPublicPublishCount == 4){
                 currentDataPublisher = privateDataPublisher;
                 currentPublicPublishCount = 0;
             }
         }
 
-//        if ( % publishingRate == 0) {
-//            Thread.sleep(1000);
-//        }
-
         if (currentCount % 100000 == 0){
             log.info("Done Sending " + (float)currentCount/1000000.0  + " M Events[TotalSentToPublicCloud=" + totalSentToPublicCloud + ", PublicCloudSendingRatio=" + eventPercentageToBeSentToPublicCloud + "]");
         }
 
-        if (currentCount == 100000000){
+        if (currentCount == 47000000){
             System.exit(0);
         }
     }
@@ -441,8 +427,8 @@ public class ResearchEventPublisher implements WrapperListener {
         System.out.println("=================================================================================");
 
         homomorphicEncDecService = new HomomorphicEncDecService();
-//        homomorphicEncDecService.init(Configuration.getProperty("key.file.path"));
-        homomorphicEncDecService.init(Configuration.getProperty("key.file.path2"));
+        homomorphicEncDecService.init(Configuration.getProperty("key.file.path"));
+//        homomorphicEncDecService.init(Configuration.getProperty("key.file.path2"));
 
         // To avoid exception xml parsing error occur for java 8
         System.setProperty("org.xml.sax.driver", "com.sun.org.apache.xerces.internal.parsers.SAXParser");
@@ -468,17 +454,17 @@ public class ResearchEventPublisher implements WrapperListener {
                 initVmManager();
                 vmManager.start();
             }
-//            AsyncCompositeHeEventPublisher.init();
+            AsyncCompositeHeEventPublisher.init();
 //            AsyncEdgarCompositeHeEventPublisher.init();
-            AsyncEdgarCompositeHeEventPublisher2.init();
+//            AsyncEdgarCompositeHeEventPublisher2.init();
 
             publishWorkers = Executors.newFixedThreadPool(20, new ThreadFactoryBuilder().setNameFormat("Publish-Workers").build());
 
 //            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
 //            publisher.startPublishing();
 
-//            publisher = new EmailBenchmarkPublisher();
-            publisher = new EdgarBenchmarkPublisher();
+            publisher = new EmailBenchmarkPublisher();
+//            publisher = new EdgarBenchmarkPublisher();
             publisher.startPublishing();
 
             //Publishable debs2016Query1Publisher = new Debs2016Query1Publisher();
@@ -516,8 +502,41 @@ public class ResearchEventPublisher implements WrapperListener {
 //        privateDataPublisher.publish(event);
     }
 
+    public static void sendThroughVm2Publisher(Event event) {
+        if(vm2DataPublisher == null) {
+            try {
+                vm2DataPublisher = generateDataPublisher(2);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        vm2DataPublisher.publish(event);
+    }
+
+    public static void sendThroughVm3Publisher(Event event) {
+        if(vm3DataPublisher == null) {
+            try {
+                vm3DataPublisher = generateDataPublisher(3);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        vm3DataPublisher.publish(event);
+    }
+
+    public static void sendThroughVm4Publisher(Event event) {
+        if(vm4DataPublisher == null) {
+            try {
+                vm4DataPublisher = generateDataPublisher(4);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        vm4DataPublisher.publish(event);
+    }
+
     public static void sendThroughPrivatePublisher(Event event, String streamId) {
-        event = new Event(streamId, System.currentTimeMillis(), null, null, event.getPayloadData());
+        event = new Event(streamId, event.getTimeStamp(), null, null, event.getPayloadData());
         privateDataPublisher.publish(event);
     }
 
