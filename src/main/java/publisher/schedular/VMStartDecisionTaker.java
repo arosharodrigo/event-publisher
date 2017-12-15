@@ -3,7 +3,6 @@ package publisher.schedular;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import publisher.schedular.util.LatencyWrapper;
 import publisher.schedular.util.StatisticsInputReaderTask;
 import publisher.schedular.util.StatisticsListener;
 import publisher.schedular.vm.VMStartDecisionListener;
@@ -34,10 +33,6 @@ public class VMStartDecisionTaker implements Runnable, StatisticsListener {
     private long tolerancePeriod;
     VMStartDecisionListener listener;
 
-    private LatencyWrapper previousLatencyWrapper;
-    private LatencyWrapper currentLatencyWrapper;
-    private int latencyWeight = 12000;
-
     public VMStartDecisionTaker(long thresholdLatency, int vmId, long tolerancePeriod, VMStartDecisionListener listener) {
         this.thresholdLatency = thresholdLatency;
         this.vmId = vmId;
@@ -51,22 +46,16 @@ public class VMStartDecisionTaker implements Runnable, StatisticsListener {
 
     public synchronized void stop(){
         stopped = true;
-        if (tolerancePeriodTask != null){
-            tolerancePeriodTask.cancel();
-            tolerancePeriodTask = null;
-        }
+        tolerancePeriodTask.cancel();
+        tolerancePeriodTask = null;
     }
 
     private boolean evaluate() {
         Double latency = currentLatency.get();
-        if(previousLatencyWrapper != null && currentLatencyWrapper != null) {
-            long dx = currentLatencyWrapper.getTime() - previousLatencyWrapper.getTime();
-            double dy = currentLatencyWrapper.getLatency() - previousLatencyWrapper.getLatency();
-            double dyDx = dy / dx;
-            double dynamicThreshold = thresholdLatency - (latencyWeight * dyDx);
-            return latency > dynamicThreshold;
+        if (latency > thresholdLatency){
+            return true;
         } else {
-            return latency > thresholdLatency;
+            return false;
         }
     }
 
@@ -107,8 +96,6 @@ public class VMStartDecisionTaker implements Runnable, StatisticsListener {
     public void onStatisticsRead(long elapsedTime, double latency, double throughput) {
         currentLatency.set(latency);
         currentElapsedTime = elapsedTime;
-        previousLatencyWrapper = currentLatencyWrapper;
-        currentLatencyWrapper = new LatencyWrapper(System.currentTimeMillis(), latency);
     }
 
     class TolerancePeriodTask extends TimerTask{

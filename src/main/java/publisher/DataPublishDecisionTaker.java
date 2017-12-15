@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import publisher.schedular.DataPublishDecisionListener;
-import publisher.schedular.util.LatencyWrapper;
 import publisher.schedular.util.StatisticsInputReaderTask;
 import publisher.schedular.util.StatisticsListener;
 
@@ -26,10 +25,6 @@ public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
     private long dataPublishThresholdLatency;
     private int vmId;
     DataPublishDecisionListener listener;
-
-    private LatencyWrapper previousLatencyWrapper;
-    private LatencyWrapper currentLatencyWrapper;
-    private int latencyWeight = 12000;
 
     public DataPublishDecisionTaker(int vmId, long dataPublishThresholdLatency, DataPublishDecisionListener listener){
         this.dataPublishThresholdLatency = dataPublishThresholdLatency;
@@ -53,8 +48,6 @@ public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
     public void onStatisticsRead(long elapsedTime, double latency, double throughput) {
         currentElapsedTime = elapsedTime;
         currentLatency.set(latency);
-        previousLatencyWrapper = currentLatencyWrapper;
-        currentLatencyWrapper = new LatencyWrapper(System.currentTimeMillis(), latency);
     }
 
     @Override
@@ -83,18 +76,7 @@ public class DataPublishDecisionTaker implements StatisticsListener, Runnable{
 
     public boolean shouldPublishToPublicCloud(){
         double latency  = currentLatency.get();
-        boolean shouldPublishToPublicCloud;
-        if(previousLatencyWrapper != null && currentLatencyWrapper != null) {
-            long dx = currentLatencyWrapper.getTime() - previousLatencyWrapper.getTime();
-            double dy = currentLatencyWrapper.getLatency() - previousLatencyWrapper.getLatency();
-            double dyDx = dy / dx;
-            double dynamicThreshold = dataPublishThresholdLatency - (latencyWeight * dyDx);
-            shouldPublishToPublicCloud = latency > dynamicThreshold;
-        } else {
-            shouldPublishToPublicCloud = latency > dataPublishThresholdLatency;
-        }
-
-        if (shouldPublishToPublicCloud){
+        if (latency > dataPublishThresholdLatency){
             log.info("Latency greater than threshold latency. Send data to PUBLIC cloud[ID=" + vmId + ", CurrentLatency="
                     + latency + ", ThresholdLatency=" + dataPublishThresholdLatency + ", ElapsedTime=" + currentElapsedTime +"]");
             return true;
