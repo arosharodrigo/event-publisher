@@ -129,8 +129,8 @@ public class EdgarBenchmarkPublisher extends Publishable {
         String time = record.get(2);
         messageSize += time.getBytes().length;
 
-        int zone = (record.get(3).isEmpty()) ? 0 : Double.valueOf(record.get(3)).intValue();
-        messageSize += 4;
+        String zone = record.get(3);
+        messageSize += zone.getBytes().length;
 
         String cik = record.get(4);
         messageSize += cik.getBytes().length;
@@ -141,17 +141,17 @@ public class EdgarBenchmarkPublisher extends Publishable {
         String extension = record.get(6);
         messageSize += extension.getBytes().length;
 
-        String code = record.get(7);
-        messageSize += code.getBytes().length;
+        int code = (record.get(7).isEmpty()) ? 0 : Double.valueOf(record.get(7)).intValue();
+        messageSize += 4;
 
         String size = record.get(8);
         messageSize += size.getBytes().length;
 
-        String idx = record.get(9);
-        messageSize += idx.getBytes().length;
+        int idx = (record.get(9).isEmpty()) ? 0 : Double.valueOf(record.get(9)).intValue();
+        messageSize += 4;
 
-        String norefer = record.get(10);
-        messageSize += norefer.getBytes().length;
+        int norefer = (record.get(10).isEmpty()) ? 0 : Double.valueOf(record.get(10)).intValue();
+        messageSize += 4;
 
         String noagent = record.get(11) + ",EosvmGSOsDxTQIcDMnES2Hpboy6JIz0T3xAiLq1YofiC9EHW2lZ0lxZJzr9Eron0MQFs2A6qCORtBz5WLWXn2ypzzMnwDqvX0Ej0cZ428HnCzP0O6M2ReNnl6N6nlkVtyYBZ78Lbxsrq0v5N3pKSqlg7mJ1KUsPSaMfGwFGKebEee5k4KfgqabJT86nlfjT21cg7rTTOh8GzmALScl3hprHYSjkLQFGOeCR68Fb7D3Drl2GrT98YS7Ui6WYTitJSLczQ35oHGVmN6xIJxED57oaEvRHxEKbMbucs7xEuQPR4cMKymRPF58S8ijV0OJ2yDfRC4Vx3zw1sMqHZGlyL7kL34EsE3EhcLyGFZSRU5lDrao6QBxH8uZNG4lmHY1sPrchKbRexZSvhG1PqbA918OeTinIYZckLB1oXRH4vlbeBFht7iiBMOBpJKz57JuboizzF0j7CFOwBS1haDuB9P4sxZHDheKkSaB3wMsx3hCzrM3p8LYBHITb0GEKqRbY2JKgBavMGMZ1o1DQj8k6673ivmZvuLcJ0W9oTG9f1AImy979Xgu5iTx2wBmIp4S4VEb3COfCMQ6LDaB21xQFas9iwx3uRf18LIP66RIr3m0wJyymOTwkCtq8fqQ8Us6bwFzWsgbGfOl5zYn73J0Ai4FTvOelpgECrftLXXSGJa5JUrNxjCWqprItHNit9Bw6YaIJFWCpjaI2D1NM86GQtatEgyL2yw811HzEwjha5yw26SVGxqN33Z0Gej6VNJhujlWmlj6kjGerVSJWjPCHweCDtCeJMY1FExzJbaGiFLg0iKsDJG8gXYIvhvbfF4kia2ilr8Z15tNlVcKA2wuf5czwJV6F1kIkjPG2qLKfDGJ6q8cDQgTnph5Qh8GqAeLjYDXUg7qa8D1RSfmqVoH8nQE6qCbY2jaYYsEKYxmZczvpMCblMAm3rCkrcsaeTHzJTacoEXh0tMMOKkXzDIR8wY4tm1LF9yfec9LC9TyyiQXjUugoKoPTlsC3QHhmgc27";
         messageSize += noagent.getBytes().length;

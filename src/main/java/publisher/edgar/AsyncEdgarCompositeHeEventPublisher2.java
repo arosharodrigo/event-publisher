@@ -36,9 +36,9 @@ public class AsyncEdgarCompositeHeEventPublisher2 {
 
     private static final int maxHeEventsReceivedForPeriod = 42;
 
-    private static final int batchSize = 168;
+    private static final int batchSize = 478;
     private static final int maxFieldLength = 1;
-    private static final int compositeEventSize = 168;
+    private static final int compositeEventSize = 478;
 
     private static AtomicLong totalPlainCount = new AtomicLong(0);
     private static AtomicLong totalEncryptedCount = new AtomicLong(0);
@@ -136,8 +136,7 @@ public class AsyncEdgarCompositeHeEventPublisher2 {
         StringBuilder field2Builder = new StringBuilder();
         StringBuilder field3Builder = new StringBuilder();
         StringBuilder field4Builder = new StringBuilder();
-        StringBuilder field5Builder1 = new StringBuilder();
-        StringBuilder field5Builder2 = new StringBuilder();
+        StringBuilder field5Builder = new StringBuilder();
         StringBuilder field6Builder = new StringBuilder();
         StringBuilder field7Builder = new StringBuilder();
         StringBuilder field8Builder = new StringBuilder();
@@ -146,8 +145,7 @@ public class AsyncEdgarCompositeHeEventPublisher2 {
         StringBuilder field11Builder = new StringBuilder();
         StringBuilder field12Builder = new StringBuilder();
         StringBuilder field13Builder = new StringBuilder();
-        StringBuilder field14Builder1 = new StringBuilder();
-        StringBuilder field14Builder2 = new StringBuilder();
+        StringBuilder field14Builder = new StringBuilder();
         StringBuilder field15Builder = new StringBuilder();
         StringBuilder field16Builder = new StringBuilder();
 
@@ -157,36 +155,27 @@ public class AsyncEdgarCompositeHeEventPublisher2 {
             field2Builder.append(payloadData[1]).append(FIELD_SEPARATOR);
             field3Builder.append(payloadData[2]).append(FIELD_SEPARATOR);
             field4Builder.append(payloadData[3]).append(FIELD_SEPARATOR);
+            field5Builder.append(payloadData[4]).append(FIELD_SEPARATOR);
             field6Builder.append(payloadData[5]).append(FIELD_SEPARATOR);
             field7Builder.append(payloadData[6]).append(FIELD_SEPARATOR);
             field8Builder.append(payloadData[7]).append(FIELD_SEPARATOR);
-            field9Builder.append(payloadData[8]).append(FIELD_SEPARATOR);
             field10Builder.append(payloadData[9]).append(FIELD_SEPARATOR);
-            field11Builder.append(payloadData[10]).append(FIELD_SEPARATOR);
-            field12Builder.append(payloadData[11]).append(FIELD_SEPARATOR);
             field13Builder.append(payloadData[12]).append(FIELD_SEPARATOR);
             field15Builder.append(payloadData[14]).append(FIELD_SEPARATOR);
             field16Builder.append(payloadData[15]).append(FIELD_SEPARATOR);
 
-            Integer zone = (Integer)payloadData[4];
-            String binaryStringZone = Integer.toBinaryString(zone);
-            int binaryStringZoneLength = binaryStringZone.length();
-            field5Builder1.append(binaryStringZone.charAt(binaryStringZoneLength -1)).append(COMMA_SEPARATOR);
-            if(binaryStringZoneLength > 1) {
-                field5Builder2.append(binaryStringZone.charAt(binaryStringZoneLength -2)).append(COMMA_SEPARATOR);
-            } else {
-                field5Builder2.append("0").append(COMMA_SEPARATOR);
-            }
+            field9Builder.append(payloadData[8]).append(COMMA_SEPARATOR);
+            field11Builder.append(payloadData[10]).append(COMMA_SEPARATOR);
+            field12Builder.append(payloadData[11]).append(COMMA_SEPARATOR);
+            field14Builder.append(payloadData[13]).append(COMMA_SEPARATOR);
+        }
 
-            Integer find = (Integer)payloadData[13];
-            String binaryStringFind = Integer.toBinaryString(find);
-            int binaryStringFindLength = binaryStringFind.length();
-            field14Builder1.append(binaryStringFind.charAt(binaryStringFindLength -1)).append(COMMA_SEPARATOR);
-            if(binaryStringFindLength > 1) {
-                field14Builder2.append(binaryStringFind.charAt(binaryStringFindLength -2)).append(COMMA_SEPARATOR);
-            } else {
-                field14Builder2.append("0").append(COMMA_SEPARATOR);
-            }
+        int dummyCount = batchSize - events.size();
+        for(int i = 0;i < dummyCount; i++) {
+            field9Builder.append(0).append(COMMA_SEPARATOR);
+            field11Builder.append(0).append(COMMA_SEPARATOR);
+            field12Builder.append(0).append(COMMA_SEPARATOR);
+            field14Builder.append(0).append(COMMA_SEPARATOR);
         }
 
         Object[] modifiedPayload = new Object[18];
@@ -194,36 +183,18 @@ public class AsyncEdgarCompositeHeEventPublisher2 {
         modifiedPayload[1] = removeAdditionalTailSeparator(field2Builder);
         modifiedPayload[2] = removeAdditionalTailSeparator(field3Builder);
         modifiedPayload[3] = removeAdditionalTailSeparator(field4Builder);
-        modifiedPayload[6] = removeAdditionalTailSeparator(field6Builder);
-        modifiedPayload[7] = removeAdditionalTailSeparator(field7Builder);
-        modifiedPayload[8] = removeAdditionalTailSeparator(field8Builder);
-        modifiedPayload[9] = removeAdditionalTailSeparator(field9Builder);
-        modifiedPayload[10] = removeAdditionalTailSeparator(field10Builder);
-        modifiedPayload[11] = removeAdditionalTailSeparator(field11Builder);
-        modifiedPayload[12] = removeAdditionalTailSeparator(field12Builder);
-        modifiedPayload[13] = removeAdditionalTailSeparator(field13Builder);
-        modifiedPayload[16] = removeAdditionalTailSeparator(field15Builder);
-        modifiedPayload[17] = removeAdditionalTailSeparator(field16Builder);
-
-        String field5Str1 = field5Builder1.toString();
-        String field51 = field5Str1.substring(0, field5Str1.length() - 1);
-        String encryptedField51 = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(field51);
-        modifiedPayload[4] = encryptedField51;
-
-        String field5Str2 = field5Builder2.toString();
-        String field52 = field5Str2.substring(0, field5Str2.length() - 1);
-        String encryptedField52 = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(field52);
-        modifiedPayload[5] = encryptedField52;
-
-        String field14Str1 = field14Builder1.toString();
-        String field141 = field14Str1.substring(0, field14Str1.length() - 1);
-        String encryptedField141 = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(field141);
-        modifiedPayload[14] = encryptedField141;
-
-        String field14Str2 = field14Builder2.toString();
-        String field142 = field14Str2.substring(0, field14Str2.length() - 1);
-        String encryptedField142 = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(field142);
-        modifiedPayload[15] = encryptedField142;
+        modifiedPayload[4] = removeAdditionalTailSeparator(field5Builder);
+        modifiedPayload[5] = removeAdditionalTailSeparator(field6Builder);
+        modifiedPayload[6] = removeAdditionalTailSeparator(field7Builder);
+        modifiedPayload[7] = removeAdditionalTailSeparator(field8Builder);
+        modifiedPayload[8] = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(removeAdditionalCommaSeparator(field9Builder));
+        modifiedPayload[9] = removeAdditionalTailSeparator(field10Builder);
+        modifiedPayload[10] = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(removeAdditionalCommaSeparator(field11Builder));
+        modifiedPayload[11] = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(removeAdditionalCommaSeparator(field12Builder));
+        modifiedPayload[12] = removeAdditionalTailSeparator(field13Builder);
+        modifiedPayload[13] = ResearchEventPublisher.homomorphicEncDecService.encryptLongVector(removeAdditionalCommaSeparator(field14Builder));
+        modifiedPayload[14] = removeAdditionalTailSeparator(field15Builder);
+        modifiedPayload[15] = removeAdditionalTailSeparator(field16Builder);
 
         return new Event(events.get(0).getStreamId(), events.get(0).getTimeStamp(), null, null, modifiedPayload);
     }
@@ -231,6 +202,11 @@ public class AsyncEdgarCompositeHeEventPublisher2 {
     private static String removeAdditionalTailSeparator(StringBuilder fieldBuilder) {
         String fieldStr = fieldBuilder.toString();
         return fieldStr.substring(0, fieldStr.length() - 3);
+    }
+
+    private static String removeAdditionalCommaSeparator(StringBuilder fieldBuilder) {
+        String fieldStr = fieldBuilder.toString();
+        return fieldStr.substring(0, fieldStr.length() - 1);
     }
 
 }

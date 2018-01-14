@@ -89,8 +89,8 @@ public class ResearchEventPublisher implements WrapperListener {
     private static int publicCloudPublishBatchSize = 40000;
 
 //    public static FilterBenchmarkPublisher publisher;
-    public static EmailBenchmarkPublisher publisher;
-//    public static EdgarBenchmarkPublisher publisher;
+//    public static EmailBenchmarkPublisher publisher;
+    public static EdgarBenchmarkPublisher publisher;
     public static HomomorphicEncDecService homomorphicEncDecService;
 
     private static final int batchSize = 478;
@@ -107,9 +107,9 @@ public class ResearchEventPublisher implements WrapperListener {
         // Email
 //        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000)); - 40000 tps support and good percent to public VM
         vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
-        vmConfigList.add(new VMConfig(2, Integer.valueOf(Configuration.getProperty("public.das.vm2.port")), Configuration.getProperty("public.das.vm2.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
-        vmConfigList.add(new VMConfig(3, Integer.valueOf(Configuration.getProperty("public.das.vm3.port")), Configuration.getProperty("public.das.vm3.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
-        vmConfigList.add(new VMConfig(4, Integer.valueOf(Configuration.getProperty("public.das.vm4.port")), Configuration.getProperty("public.das.vm4.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
+//        vmConfigList.add(new VMConfig(2, Integer.valueOf(Configuration.getProperty("public.das.vm2.port")), Configuration.getProperty("public.das.vm2.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
+//        vmConfigList.add(new VMConfig(3, Integer.valueOf(Configuration.getProperty("public.das.vm3.port")), Configuration.getProperty("public.das.vm3.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
+//        vmConfigList.add(new VMConfig(4, Integer.valueOf(Configuration.getProperty("public.das.vm4.port")), Configuration.getProperty("public.das.vm4.ip"), 8 * 1000,  10 * 1000, 2 * 1000));
         // EDGAR
 //        vmConfigList.add(new VMConfig(1, Integer.valueOf(Configuration.getProperty("public.das.vm1.port")), Configuration.getProperty("public.das.vm1.ip"), 10 * 1000,  12 * 1000, 2 * 1000));
 //        vmConfigList.add(new VMConfig(1, 9611, "192.248.8.134", 10, 10, 10));
@@ -280,7 +280,7 @@ public class ResearchEventPublisher implements WrapperListener {
         int currentCount = count.incrementAndGet();
 
         if (sendToPublicCloud && (currentDataPublisher == privateDataPublisher)){
-            if (currentCount % (100 - eventPercentageToBeSentToPublicCloud) == 0){
+            if (currentCount % (66 - eventPercentageToBeSentToPublicCloud) == 0){
                 currentDataPublisher = null; //setting to null for it to be picked interchangeably when  sending event in line # 162
             }
         }
@@ -454,17 +454,17 @@ public class ResearchEventPublisher implements WrapperListener {
                 initVmManager();
                 vmManager.start();
             }
-            AsyncCompositeHeEventPublisher.init();
+//            AsyncCompositeHeEventPublisher.init();
 //            AsyncEdgarCompositeHeEventPublisher.init();
-//            AsyncEdgarCompositeHeEventPublisher2.init();
+            AsyncEdgarCompositeHeEventPublisher2.init();
 
             publishWorkers = Executors.newFixedThreadPool(20, new ThreadFactoryBuilder().setNameFormat("Publish-Workers").build());
 
 //            publisher = new FilterBenchmarkPublisher("inputFilterStream:1.0.0", "inputHEFilterStream:1.0.0");
 //            publisher.startPublishing();
 
-            publisher = new EmailBenchmarkPublisher();
-//            publisher = new EdgarBenchmarkPublisher();
+//            publisher = new EmailBenchmarkPublisher();
+            publisher = new EdgarBenchmarkPublisher();
             publisher.startPublishing();
 
             //Publishable debs2016Query1Publisher = new Debs2016Query1Publisher();
