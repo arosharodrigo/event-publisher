@@ -36,9 +36,11 @@ public class AsyncEdgarCompositeHeEventPublisher2 {
 
     private static final int maxHeEventsReceivedForPeriod = 42;
 
-    private static final int batchSize = 478;
+//    private static final int batchSize = 478;
+    private static final int batchSize = 140;
     private static final int maxFieldLength = 1;
-    private static final int compositeEventSize = 478;
+//    private static final int compositeEventSize = 478;
+    private static final int compositeEventSize = 140;
 
     private static AtomicLong totalPlainCount = new AtomicLong(0);
     private static AtomicLong totalEncryptedCount = new AtomicLong(0);

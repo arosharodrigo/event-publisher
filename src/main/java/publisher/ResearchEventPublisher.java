@@ -93,7 +93,8 @@ public class ResearchEventPublisher implements WrapperListener {
     public static EdgarBenchmarkPublisher publisher;
     public static HomomorphicEncDecService homomorphicEncDecService;
 
-    private static final int batchSize = 478;
+//    private static final int batchSize = 478;
+    private static final int batchSize = 140;
 
     private static ExecutorService publishWorkers;
 

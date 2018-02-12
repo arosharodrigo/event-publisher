@@ -47,7 +47,8 @@ public class AsyncCompositeHeEventPublisher {
 //    private static ExecutorService encryptedEventsPublishScheduler;
 
     private static ScheduledExecutorService eventCountPrinter;
-    private static final int batchSize = 478;
+//    private static final int batchSize = 478;
+    private static final int batchSize = 140;
     private static final int maxEmailLength = 40;
     private static final int compositeEventSize = 10;
 

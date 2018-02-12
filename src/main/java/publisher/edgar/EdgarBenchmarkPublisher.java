@@ -86,8 +86,8 @@ public class EdgarBenchmarkPublisher extends Publishable {
             try {
 //                int iterations = 200;
 //                int iterations = 42;
-                int iterations = EdgarUtil2.generateTps(dataPublisherCounter.getAndIncrement()) * 2 / 3;
-                int repeatCount = 4;
+                int iterations = EdgarUtil2.generateTps(dataPublisherCounter.getAndIncrement()) * 1 / 3;
+                int repeatCount = 8;
                 for(int i = 0;i < iterations;i++) {
                     EventWrapper event = eventQueue.poll();
                     if(event != null) {
@@ -97,7 +97,7 @@ public class EdgarBenchmarkPublisher extends Publishable {
                             messageSize.addAndGet(eventsSize);
                         }
                     } else {
-                        log.error("No data to publish, reader is slow");
+//                        log.error("No data to publish, reader is slow");
                     }
                 }
             } catch (Throwable t) {
